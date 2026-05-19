@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Bug fixes
+
+- **`SnipeITConnectionError`**: `httpx.RequestError` (DNS failure, connection refused, SSL errors) now raises `SnipeITConnectionError` instead of the generic `SnipeITException`, giving callers a distinct catchable type for transport-level failures. The error message includes the HTTP method and path.
+- **`SnipeITStateError`**: The two `RuntimeError` raises in `Asset.save()` (missing or malformed `custom_fields` when flushing staged custom fields) are now `SnipeITStateError`, keeping them inside the library's exception hierarchy.
+- **`_extract_payload` error message**: Errors from a `{"status": "error"}` body on a 200 response now say `"API returned status=error in a 200 response body: ..."` to distinguish them from HTTP-layer errors.
+- **`get_by_serial` fallthrough message**: The catch-all error now includes the serial number, response type, and a truncated repr of the unexpected response.
+
+### Internal
+
+- Both new exceptions (`SnipeITConnectionError`, `SnipeITStateError`) are exported from the top-level `snipeit` package.
+
 ## 0.5.0 (2026-05-17)
 
 ### New features
