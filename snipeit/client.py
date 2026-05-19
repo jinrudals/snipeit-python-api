@@ -16,6 +16,7 @@ from .exceptions import (
     SnipeITApiError,
     SnipeITAuthenticationError,
     SnipeITClientError,
+    SnipeITConnectionError,
     SnipeITException,
     SnipeITNotFoundError,
     SnipeITServerError,
@@ -208,7 +209,7 @@ class SnipeIT:
             logger.warning(
                 "Snipe-IT request error on %s /api/v1/%s: %s", method, path, e
             )
-            raise SnipeITException(f"An unexpected error occurred: {e}") from e
+            raise SnipeITConnectionError(f"Connection error on {method} /api/v1/{path}: {e}") from e
 
         elapsed_ms = (time.monotonic() - start) * 1000.0
         http_logger.debug(
@@ -283,7 +284,7 @@ class SnipeIT:
                 f"Request timed out after {effective_timeout} seconds."
             ) from e
         except httpx.RequestError as e:
-            raise SnipeITException(f"An unexpected error occurred: {e}") from e
+            raise SnipeITConnectionError(f"Connection error on {method} /api/v1/{path}: {e}") from e
 
     @contextlib.contextmanager
     def _stream_request(
@@ -311,7 +312,7 @@ class SnipeIT:
                 f"Request timed out after {effective_timeout} seconds."
             ) from e
         except httpx.RequestError as e:
-            raise SnipeITException(f"An unexpected error occurred: {e}") from e
+            raise SnipeITConnectionError(f"Connection error on {method} /api/v1/{path}: {e}") from e
 
     @staticmethod
     def _require_body(method: str, body: dict[str, Any] | None) -> dict[str, Any]:

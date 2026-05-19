@@ -286,7 +286,10 @@ def _extract_payload(resp: dict[str, Any]) -> dict[str, Any]:
         return {}
     status = resp.get("status")
     if status == "error":
-        raise SnipeITApiError(str(resp.get("messages", "Unknown API error")))
+        messages = str(resp.get("messages", "Unknown API error"))
+        raise SnipeITApiError(
+            f"API returned status=error in a 200 response body: {messages}"
+        )
     if status == "success" and "payload" in resp:
         payload = resp["payload"]
         return payload if isinstance(payload, dict) else {}

@@ -135,3 +135,44 @@ class SnipeITServerError(SnipeITApiError):
     """
     pass
 
+
+class SnipeITConnectionError(SnipeITException):
+    """Raised when a network-level error prevents the request from completing.
+
+    Covers DNS failures, connection refused, SSL errors, and other transport
+    errors that occur before a response is received.
+
+    Raises:
+        SnipeITConnectionError: Always represents a transport/connection failure.
+
+    Examples:
+        Handle connection failures::
+
+            try:
+                api.assets.list()
+            except SnipeITConnectionError as e:
+                print("Could not reach Snipe-IT:", e)
+    """
+    pass
+
+
+class SnipeITStateError(SnipeITException):
+    """Raised when an operation cannot proceed due to invalid object state.
+
+    For example, attempting to save staged custom fields when the asset's
+    ``custom_fields`` mapping is no longer available.
+
+    Raises:
+        SnipeITStateError: Always represents an invalid in-memory state.
+
+    Examples:
+        Handle state errors::
+
+            try:
+                asset.save()
+            except SnipeITStateError:
+                asset.refresh()
+                asset.save()
+    """
+    pass
+

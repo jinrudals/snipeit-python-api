@@ -6,6 +6,7 @@ from typing import Any, ClassVar, Self
 
 from pydantic import PrivateAttr
 
+from ...exceptions import SnipeITStateError
 from ..base import ApiObject, _extract_payload
 
 _MISSING = object()  # sentinel for "no value present"
@@ -160,14 +161,14 @@ class Asset(ApiObject):
                 # custom_fields was wiped between staging and save (e.g. by a
                 # manual setattr), surface a clear error rather than silently
                 # dropping the change.
-                raise RuntimeError(
+                raise SnipeITStateError(
                     "Cannot save staged custom fields: 'custom_fields' is not "
                     "available on this asset. Call refresh() and re-stage."
                 )
             for label, value in self._pending_custom_fields.items():
                 entry = cfs.get(label)
                 if not isinstance(entry, dict) or "field" not in entry:
-                    raise RuntimeError(
+                    raise SnipeITStateError(
                         f"Cannot resolve column name for staged custom field "
                         f"{label!r}: 'custom_fields[{label!r}]' is missing or "
                         "malformed. Call refresh() and re-stage."

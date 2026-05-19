@@ -10,6 +10,7 @@ from snipeit._log import redact_headers
 from snipeit.exceptions import (
     SnipeITApiError,
     SnipeITClientError,
+    SnipeITConnectionError,
     SnipeITException,
     SnipeITNotFoundError,
     SnipeITServerError,
@@ -141,9 +142,9 @@ def test_generic_request_exception_raises_SnipeITException(snipeit_client, httpx
             method="GET",
             url="https://snipe.example.test/api/v1/hardware/1",
         )
-    with pytest.raises(SnipeITException) as excinfo:
+    with pytest.raises(SnipeITConnectionError) as excinfo:
         snipeit_client.get("hardware/1")
-    assert str(excinfo.value) == "An unexpected error occurred: boom"
+    assert str(excinfo.value) == "Connection error on GET /api/v1/hardware/1: boom"
 
 
 @pytest.mark.unit

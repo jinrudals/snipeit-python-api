@@ -88,7 +88,9 @@ class AssetsManager(AssetFilesMixin, AssetLabelsMixin, BaseResourceManager[Asset
         if isinstance(response, dict) and response.get("id") is not None:
             return self._make(response)
 
-        raise SnipeITApiError("Unexpected response for byserial")
+        raise SnipeITApiError(
+            f"Unexpected response shape for byserial {serial!r}: {type(response).__name__} — {response!r:.200}"
+        )
 
     def create_maintenance(
         self, asset_id: int, asset_improvement: str, supplier_id: int, title: str, **kwargs: Any

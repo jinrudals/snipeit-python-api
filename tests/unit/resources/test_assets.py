@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from snipeit.exceptions import SnipeITNotFoundError
+from snipeit.exceptions import SnipeITNotFoundError, SnipeITStateError
 from snipeit.resources.assets import Asset
 
 pytestmark = pytest.mark.unit
@@ -514,7 +514,7 @@ def test_save_raises_when_pending_label_is_not_in_custom_fields(snipeit_client, 
     )
     asset = snipeit_client.assets.get(105)
     asset._pending_custom_fields["Owner"] = "alice"  # whitebox: simulate stale stage
-    with pytest.raises(RuntimeError, match="custom_fields"):
+    with pytest.raises(SnipeITStateError, match="custom_fields"):
         asset.save()
 
 
@@ -531,7 +531,7 @@ def test_save_raises_when_pending_label_entry_malformed(snipeit_client, httpx_mo
     )
     asset = snipeit_client.assets.get(106)
     asset._pending_custom_fields["Owner"] = "alice"
-    with pytest.raises(RuntimeError, match="Owner"):
+    with pytest.raises(SnipeITStateError, match="Owner"):
         asset.save()
 
 
