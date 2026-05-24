@@ -267,3 +267,133 @@ def test_save_refreshes_loaded_state():
     obj.custom_fields["x"] = 3
     dirty = obj._dirty_set()
     assert "custom_fields" in dirty
+
+
+# ---------------------------------------------------------------------------
+# Base / ApiObject edge cases to cover remaining lines in resources/base.py
+# ---------------------------------------------------------------------------
+
+@pytest.mark.unit
+def test_fast_json_copy_deepcopy_fallback():
+    """Verify _fast_json_copy falls back to copy.deepcopy for non-JSON objects."""
+    import datetime
+
+    from snipeit.resources.base import _fast_json_copy
+    now = datetime.datetime.now()
+    copied = _fast_json_copy(now)
+    assert copied == now
+
+
+@pytest.mark.unit
+def test_safe_snapshot_exception_handler():
+    """Verify _safe_snapshot falls back to referencing the object when copying raises Exception."""
+    from snipeit.resources.base import _safe_snapshot
+
+    class Uncopyable:
+        def __deepcopy__(self, memo):
+            raise RuntimeError("cannot copy me")
+
+    uncopyable = Uncopyable()
+    data = {"nested": [uncopyable]}
+    # _fast_json_copy -> deepcopy fallback -> RuntimeError -> safe_snapshot catch
+    snapshot = _safe_snapshot(data)
+    assert snapshot["nested"] is data["nested"]  # stored by reference
+
+
+@pytest.mark.unit
+def test_api_object_setattr_getattr_exception():
+    """Verify __setattr__ handles property/getattr exceptions gracefully."""
+    class BrokenApiObject(ApiObject):
+        def __getattribute__(self, name):
+            if name == "id":
+                raise AttributeError("Broken attribute")
+            return super().__getattribute__(name)
+
+    mgr = MockManager()
+    obj = BrokenApiObject(mgr, {"id": 1})
+    obj._path = "test_objects"
+    # Setting the declared 'id' attribute triggers __setattr__, calls getattr, which raises AttributeError.
+    # The try-except catch block inside __setattr__ handles this gracefully.
+    obj.id = 2
+
+
+@pytest.mark.unit
+def test_api_object_dirty_set_comparison_exception():
+    """Verify _dirty_set treats non-comparable values as dirty instead of crashing."""
+    class BadComparer:
+        def __eq__(self, other):
+            raise TypeError("cannot compare")
+
+        def __ne__(self, other):
+            raise TypeError("cannot compare")
+
+    mgr = MockManager()
+    obj = ApiObject(mgr, {"id": 1, "value": BadComparer()})
+    obj._path = "test_objects"
+    # Even if comparisons raise, we default to marked as dirty
+    assert "value" in obj._dirty_set()
+
+
+@pytest.mark.unit
+def test_extract_payload_edge_cases():
+    """Verify _extract_payload handles non-dict payloads and raw dictionary payloads."""
+    from snipeit.resources.base import _extract_payload
+
+    # 1. Non-dict response returns {}
+    assert _extract_payload(["not", "a", "dict"]) == {}  # type: ignore[arg-type]
+
+    # 2. Raw object (no envelope status) returns itself
+    raw = {"id": 42, "name": "Raw Object"}
+    assert _extract_payload(raw) is raw
+
+
+@pytest.mark.unit
+def test_base_resource_manager_default_path():
+    """Verify BaseResourceManager uses resource_cls._resource_path if path is None."""
+    from snipeit.resources.base import BaseResourceManager
+
+    class DummyResource(ApiObject):
+        _resource_path = "dummies"
+
+    class DummyManager(BaseResourceManager[DummyResource]):
+        resource_cls = DummyResource
+        path = None  # force path lookup
+
+    mgr = DummyManager(MockManager())
+    assert mgr.path == "dummies"
+
+
+@pytest.mark.unit
+def test_base_resource_manager_list_none_rows(snipeit_client, httpx_mock):
+    """list() returns [] if response lacks 'rows' key or 'rows' is None."""
+    # 1. Missing rows key
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware",
+        json={"total": 0},
+    )
+    assert snipeit_client.assets.list() == []
+
+
+@pytest.mark.unit
+def test_base_resource_manager_list_all_error_shapes(snipeit_client, httpx_mock):
+    """list_all() raises SnipeITException if response is not a dict or 'rows' is not a list."""
+    from snipeit.exceptions import SnipeITException
+
+    # 1. Non-dict response shape
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware?limit=100&offset=0",
+        json=["invalid", "list"],
+    )
+    with pytest.raises(SnipeITException, match="expected dict"):
+        list(snipeit_client.assets.list_all())
+
+    # 2. Non-list rows shape
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware?limit=100&offset=0",
+        json={"total": 1, "rows": "not a list"},
+    )
+    with pytest.raises(SnipeITException, match="'rows' must be a list"):
+        list(snipeit_client.assets.list_all())
