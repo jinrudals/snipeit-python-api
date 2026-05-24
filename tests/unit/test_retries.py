@@ -332,3 +332,21 @@ def test_full_jitter_helper_returns_zero_for_zero_base():
 
     assert _full_jitter(0.0) == 0.0
     assert _full_jitter(-1.0) == 0.0
+
+
+@pytest.mark.unit
+def test_retry_transport_close_closes_wrapped():
+    """Verify that closing the RetryTransport closes the underlying wrapped transport."""
+    from snipeit._retry import RetryTransport
+
+    class CloseTracker:
+        def __init__(self):
+            self.closed = False
+
+        def close(self) -> None:
+            self.closed = True
+
+    tracker = CloseTracker()
+    rt = RetryTransport(wrapped=tracker)  # type: ignore[arg-type]
+    rt.close()
+    assert tracker.closed is True
