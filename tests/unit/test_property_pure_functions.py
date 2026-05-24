@@ -13,6 +13,7 @@ pytestmark = pytest.mark.unit
 # _parse_retry_after
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @given(st.text())
 @settings(suppress_health_check=[HealthCheck.too_slow])
@@ -52,7 +53,9 @@ def test_parse_retry_after_result_is_non_negative(value):
 # Recursive strategy for arbitrary JSON-shaped values (the kind Snipe-IT
 # might put in a "messages" field).
 _json_val = st.recursive(
-    st.one_of(st.none(), st.booleans(), st.integers(), st.floats(allow_nan=False, allow_infinity=False), st.text(max_size=20)),
+    st.one_of(
+        st.none(), st.booleans(), st.integers(), st.floats(allow_nan=False, allow_infinity=False), st.text(max_size=20)
+    ),
     lambda children: st.one_of(
         st.lists(children, max_size=4),
         st.dictionaries(st.text(max_size=8), children, max_size=4),

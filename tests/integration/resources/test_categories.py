@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -31,10 +33,8 @@ def test_categories_crud(real_snipeit_client: SnipeIT, run_id: str, _n, id_int):
         got2 = c.categories.get(id_int(created))
         assert getattr(got2, "name", None) == new_name
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.categories.delete(id_int(created))
-        except Exception:
-            pass
 
     with pytest.raises((SnipeITNotFoundError, SnipeITApiError)):
         c.categories.get(id_int(created))

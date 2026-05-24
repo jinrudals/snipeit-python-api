@@ -15,8 +15,10 @@ This is the highest-risk code path in the library because:
 If this test passes, the README's "stage and save repeatedly without
 refresh()" promise is proven against real Snipe-IT.
 """
+
 from __future__ import annotations
 
+import contextlib
 import uuid
 
 import pytest
@@ -121,21 +123,13 @@ def test_custom_fields_end_to_end(real_snipeit_client: SnipeIT, base, run_id: st
     finally:
         # Reverse-order cleanup
         if asset is not None:
-            try:
+            with contextlib.suppress(Exception):
                 c.assets.delete(id_int(asset))
-            except Exception:
-                pass
         if model is not None:
-            try:
+            with contextlib.suppress(Exception):
                 c.models.delete(id_int(model))
-            except Exception:
-                pass
         if fieldset is not None:
-            try:
+            with contextlib.suppress(Exception):
                 c.fieldsets.delete(id_int(fieldset))
-            except Exception:
-                pass
-        try:
+        with contextlib.suppress(Exception):
             c.fields.delete(id_int(fld))
-        except Exception:
-            pass

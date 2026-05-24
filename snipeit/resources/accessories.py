@@ -18,6 +18,7 @@ class Accessory(ApiObject):
             acc = api.accessories.get(1)
             print(acc)
     """
+
     _resource_path = "accessories"
 
     def __repr__(self) -> str:
@@ -41,7 +42,7 @@ class AccessoriesManager(BaseResourceManager[Accessory]):
     resource_cls = Accessory
     path = Accessory._resource_path
 
-    def create(self, name: str, qty: int, category_id: int, **kwargs: Any) -> 'Accessory':
+    def create(self, name: str, qty: int, category_id: int, **kwargs: Any) -> "Accessory":
         """Create a new accessory.
 
         Args:

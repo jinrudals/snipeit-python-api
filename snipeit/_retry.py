@@ -117,14 +117,10 @@ class RetryTransport(httpx.BaseTransport):
                 self._backoff(attempt, retry_after=None)
                 continue
 
-            if (
-                retryable
-                and attempt < self.max_retries
-                and response.status_code in self.status_forcelist
-            ):
-                retry_after = self._parse_retry_after(
-                    response.headers.get("Retry-After")
-                ) if self.respect_retry_after else None
+            if retryable and attempt < self.max_retries and response.status_code in self.status_forcelist:
+                retry_after = (
+                    self._parse_retry_after(response.headers.get("Retry-After")) if self.respect_retry_after else None
+                )
                 logger.warning(
                     "Retrying %s %s after HTTP %d (attempt %d/%d)",
                     method,
@@ -141,9 +137,7 @@ class RetryTransport(httpx.BaseTransport):
             return response
 
         # Unreachable: the loop always either returns or raises.
-        raise last_error if last_error is not None else RuntimeError(
-            "RetryTransport exited loop without a response"
-        )
+        raise last_error if last_error is not None else RuntimeError("RetryTransport exited loop without a response")
 
     def close(self) -> None:
         self._wrapped.close()

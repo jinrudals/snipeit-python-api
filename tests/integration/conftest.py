@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 # Additional imports for shared fixtures
 import time
 import uuid
@@ -47,6 +49,7 @@ def _configure_integration_env():
 # ---------------------------
 # Shared helpers/fixtures
 # ---------------------------
+
 
 def _name(prefix: str, run_id: str) -> str:
     return f"{prefix}-{run_id}-{uuid.uuid4().hex[:6]}"
@@ -144,38 +147,22 @@ def base(real_snipeit_client: SnipeIT, run_id: str):
 
     # Best-effort cleanup for base data at session end (reverse order where dependencies exist)
     # Assets may have been created referencing these; tests delete their own assets.
-    try:
+    with contextlib.suppress(Exception):
         c.users.delete(_id_int(user))
-    except Exception:
-        pass
-    try:
+    with contextlib.suppress(Exception):
         c.models.delete(_id_int(model))
-    except Exception:
-        pass
-    try:
+    with contextlib.suppress(Exception):
         c.status_labels.delete(_id_int(status_deploy))
-    except Exception:
-        pass
-    try:
+    with contextlib.suppress(Exception):
         c.status_labels.delete(_id_int(status_undep))
-    except Exception:
-        pass
     # locations: delete child first, then root
-    try:
+    with contextlib.suppress(Exception):
         c.locations.delete(_id_int(loc_child))
-    except Exception:
-        pass
-    try:
+    with contextlib.suppress(Exception):
         c.locations.delete(_id_int(loc_root))
-    except Exception:
-        pass
     # categories
     for cat in (cat_asset, cat_acc, cat_comp, cat_cons, cat_lic):
-        try:
+        with contextlib.suppress(Exception):
             c.categories.delete(_id_int(cat))
-        except Exception:
-            pass
-    try:
+    with contextlib.suppress(Exception):
         c.manufacturers.delete(_id_int(mfg))
-    except Exception:
-        pass

@@ -1,6 +1,8 @@
 import pytest
 
 pytestmark = pytest.mark.unit
+
+
 def test_labels_writes_pdf_bytes_directly(snipeit_client, httpx_mock, tmp_path):
     pdf_bytes = b"%PDF-1.4 test"
     httpx_mock.add_response(
@@ -18,28 +20,44 @@ def test_labels_writes_pdf_bytes_directly(snipeit_client, httpx_mock, tmp_path):
 
 @pytest.mark.unit
 def test_audit_by_id_and_asset_audit(snipeit_client, httpx_mock):
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/audit/1", json={"status": "success"})
+    httpx_mock.add_response(
+        method="POST", url="https://snipe.example.test/api/v1/hardware/audit/1", json={"status": "success"}
+    )
     resp = snipeit_client.assets.audit_by_id(1, note="checked")
     assert isinstance(resp, dict)
 
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/1/audit", json={"status": "success"})
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "asset_tag": "A1"})
+    httpx_mock.add_response(
+        method="POST", url="https://snipe.example.test/api/v1/hardware/1/audit", json={"status": "success"}
+    )
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "asset_tag": "A1"}
+    )
     asset = snipeit_client.assets._make({"id": 1, "asset_tag": "A1"})
     asset.audit(note="checked")
 
 
 @pytest.mark.unit
 def test_audit_overdue_and_due_lists(snipeit_client, httpx_mock):
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/audit/overdue", json={"status": "success", "data": []})
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/audit/due", json={"status": "success", "data": []})
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware/audit/overdue",
+        json={"status": "success", "data": []},
+    )
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/audit/due", json={"status": "success", "data": []}
+    )
     assert snipeit_client.assets.list_audit_overdue()["status"] == "success"
     assert snipeit_client.assets.list_audit_due()["status"] == "success"
 
 
 @pytest.mark.unit
 def test_restore(snipeit_client, httpx_mock):
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/1/restore", json={"status": "success"})
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "asset_tag": "A1"})
+    httpx_mock.add_response(
+        method="POST", url="https://snipe.example.test/api/v1/hardware/1/restore", json={"status": "success"}
+    )
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "asset_tag": "A1"}
+    )
     asset = snipeit_client.assets._make({"id": 1, "asset_tag": "A1"})
     out = asset.restore()
     assert out.id == 1
@@ -47,11 +65,17 @@ def test_restore(snipeit_client, httpx_mock):
 
 @pytest.mark.unit
 def test_licenses_and_files_endpoints(snipeit_client, httpx_mock, tmp_path):
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1/licenses", json={"status": "success", "data": []})
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware/1/licenses",
+        json={"status": "success", "data": []},
+    )
     data = snipeit_client.assets.get_licenses(1)
     assert data["status"] == "success"
 
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1/files", json={"status": "success", "files": []})
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1/files", json={"status": "success", "files": []}
+    )
     files_list = snipeit_client.assets.list_files(1)
     assert files_list["status"] == "success"
 
@@ -74,16 +98,16 @@ def test_licenses_and_files_endpoints(snipeit_client, httpx_mock, tmp_path):
     assert out_path == str(dest)
     assert dest.read_bytes() == b"data"
 
-    httpx_mock.add_response(method="DELETE", url="https://snipe.example.test/api/v1/hardware/1/files/2/delete", status_code=204)
+    httpx_mock.add_response(
+        method="DELETE", url="https://snipe.example.test/api/v1/hardware/1/files/2/delete", status_code=204
+    )
     snipeit_client.assets.delete_file(1, 2)
-
-
-
 
 
 # ---------------------------------------------------------------------------
 # Task 11: _raw_request error paths via upload_files
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_upload_files_timeout_raises_snipeit_timeout_error(snipeit_client, httpx_mock, tmp_path):
@@ -106,6 +130,7 @@ def test_upload_files_timeout_raises_snipeit_timeout_error(snipeit_client, httpx
 # ---------------------------------------------------------------------------
 # Task 13: upload_files validation and error-response paths
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_upload_files_empty_paths_raises_value_error(snipeit_client):
@@ -171,6 +196,7 @@ def test_upload_files_closes_file_handles_on_success(snipeit_client, httpx_mock,
     original_open = __builtins__["open"] if isinstance(__builtins__, dict) else open
 
     import builtins
+
     original_open = builtins.open
 
     def tracking_open(path, mode="r", **kwargs):
@@ -179,17 +205,20 @@ def test_upload_files_closes_file_handles_on_success(snipeit_client, httpx_mock,
         return fh
 
     import unittest.mock as mock
+
     with mock.patch("builtins.open", side_effect=tracking_open):
         snipeit_client.assets.upload_files(1, [str(f)])
 
-    assert all(fh.closed for fh in opened_handles if hasattr(fh, "closed")), \
+    assert all(fh.closed for fh in opened_handles if hasattr(fh, "closed")), (
         "All file handles must be closed after upload"
+    )
 
 
 @pytest.mark.unit
 def test_upload_files_unreadable_file_raises_permission_error(snipeit_client, tmp_path, monkeypatch):
     """When a file exists but is not readable, PermissionError must be raised."""
     import os
+
     f = tmp_path / "unreadable.txt"
     f.write_text("data")
 
@@ -241,6 +270,7 @@ def test_upload_files_handles_file_close_failure_gracefully(snipeit_client, http
         return fh
 
     import builtins
+
     monkeypatch.setattr(builtins, "open", bad_open)
 
     with pytest.warns(UserWarning, match="Failed to close file"):

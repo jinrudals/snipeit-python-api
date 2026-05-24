@@ -3,6 +3,7 @@
 These cover behaviour that is unique to a particular resource and cannot be
 expressed in the generic CRUD smoke tests (test_resources_smoke.py).
 """
+
 import json
 
 import pytest
@@ -15,6 +16,7 @@ BASE = "https://snipe.example.test/api/v1"
 # ---------------------------------------------------------------------------
 # UsersManager.me() — unique endpoint not shared by any other manager
 # ---------------------------------------------------------------------------
+
 
 def test_users_me_hits_users_me_endpoint(snipeit_client, httpx_mock):
     """me() must GET /users/me and return a User object for the token owner."""
@@ -35,6 +37,7 @@ def test_users_me_hits_users_me_endpoint(snipeit_client, httpx_mock):
 # AccessoriesManager.checkin_from_user() — unique endpoint
 # ---------------------------------------------------------------------------
 
+
 def test_accessories_checkin_from_user_posts_to_correct_url(snipeit_client, httpx_mock):
     """checkin_from_user(id) must POST to /accessories/{id}/checkin and return the payload."""
     httpx_mock.add_response(
@@ -53,6 +56,7 @@ def test_accessories_checkin_from_user_posts_to_correct_url(snipeit_client, http
 # CategoriesManager.create() — requires category_type
 # ---------------------------------------------------------------------------
 
+
 def test_categories_create_sends_category_type(snipeit_client, httpx_mock):
     """create() must include category_type in the request body — it is required by the API."""
     httpx_mock.add_response(
@@ -70,6 +74,7 @@ def test_categories_create_sends_category_type(snipeit_client, httpx_mock):
 # ---------------------------------------------------------------------------
 # StatusLabelsManager — path is 'statuslabels', not 'status_labels'
 # ---------------------------------------------------------------------------
+
 
 def test_status_labels_uses_statuslabels_api_path(snipeit_client, httpx_mock):
     """The Snipe-IT API path for status labels is 'statuslabels' (no underscore).

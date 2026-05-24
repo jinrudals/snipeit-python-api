@@ -17,6 +17,7 @@ class Category(ApiObject):
             cat = api.categories.get(1)
             print(cat)
     """
+
     _resource_path = "categories"
 
     def __repr__(self) -> str:
@@ -43,7 +44,7 @@ class CategoriesManager(BaseResourceManager[Category]):
     resource_cls = Category
     path = Category._resource_path
 
-    def create(self, name: str, category_type: str, **kwargs: Any) -> 'Category':
+    def create(self, name: str, category_type: str, **kwargs: Any) -> "Category":
         """Create a new category.
 
         Args:

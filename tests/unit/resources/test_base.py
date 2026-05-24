@@ -20,9 +20,11 @@ class MockManager:
         self._patched_data = data
         return {"status": "success", "payload": data}
 
+
 @pytest.fixture
 def mock_manager():
     return MockManager()
+
 
 @pytest.fixture
 def api_object(mock_manager):
@@ -30,10 +32,12 @@ def api_object(mock_manager):
     obj._path = "test_objects"
     return obj
 
+
 @pytest.mark.unit
 def test_delete_object(api_object, mock_manager):
     api_object.delete()
     assert mock_manager._deleted_path == "test_objects/1"
+
 
 @pytest.mark.unit
 def test_save_object(api_object, mock_manager):
@@ -67,10 +71,12 @@ def test_save_unsuccessful_raises_and_keeps_dirty_fields():
         def __init__(self):
             self._patched_path = None
             self._patched_data = None
+
         def _patch(self, path, data):
             self._patched_path = path
             self._patched_data = data
             return {"status": "error", "messages": "nope", "payload": {}}
+
     mgr = FailingManager()
     obj = ApiObject(mgr, {"id": 2, "name": "A"})
     obj._path = "test_objects"
@@ -95,6 +101,7 @@ def test_declared_field_identical_reassignment_preserves_dirty_flag():
     class Mgr:
         def __init__(self):
             self.calls = []
+
         def _patch(self, path, data):
             self.calls.append((path, data))
             return {"status": "success", "payload": data}
@@ -109,9 +116,7 @@ def test_declared_field_identical_reassignment_preserves_dirty_flag():
 
     # Identical re-assignment must not clear the dirty flag.
     asset.name = "NewName"
-    assert "name" in asset._dirty_set(), (
-        "no-op re-assignment cleared dirty bit — save() would drop the change"
-    )
+    assert "name" in asset._dirty_set(), "no-op re-assignment cleared dirty bit — save() would drop the change"
 
     asset.save()
     assert mgr.calls == [("hardware/1", {"name": "NewName"})]
@@ -126,6 +131,7 @@ def test_declared_field_identical_to_loaded_value_stays_clean():
     class Mgr:
         def __init__(self):
             self.calls = []
+
         def _patch(self, path, data):
             self.calls.append((path, data))
             return {"status": "success", "payload": data}
@@ -173,6 +179,7 @@ def test_extra_fields_refresh_and_save_use_pydantic_extra_storage():
 # Regression tests for _apply_server_data (Task 17)
 # These lock in the pydantic-internals behavior so upgrades fail loudly.
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_apply_server_data_replaces_extra_fields_not_appends():
@@ -273,12 +280,14 @@ def test_save_refreshes_loaded_state():
 # Base / ApiObject edge cases to cover remaining lines in resources/base.py
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_fast_json_copy_deepcopy_fallback():
     """Verify _fast_json_copy falls back to copy.deepcopy for non-JSON objects."""
     import datetime
 
     from snipeit.resources.base import _fast_json_copy
+
     now = datetime.datetime.now()
     copied = _fast_json_copy(now)
     assert copied == now
@@ -303,6 +312,7 @@ def test_safe_snapshot_exception_handler():
 @pytest.mark.unit
 def test_api_object_setattr_getattr_exception():
     """Verify __setattr__ handles property/getattr exceptions gracefully."""
+
     class BrokenApiObject(ApiObject):
         other_field: str = ""
 
@@ -322,6 +332,7 @@ def test_api_object_setattr_getattr_exception():
 @pytest.mark.unit
 def test_api_object_dirty_set_comparison_exception():
     """Verify _dirty_set treats non-comparable values as dirty instead of crashing."""
+
     class BadComparer:
         def __eq__(self, other):
             raise TypeError("cannot compare")

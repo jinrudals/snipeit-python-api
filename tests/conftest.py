@@ -1,3 +1,4 @@
+import contextlib
 import multiprocessing
 import os
 
@@ -16,10 +17,8 @@ _original_set_start_method = multiprocessing.set_start_method
 
 
 def _safe_set_start_method(method, force=False):  # type: ignore[no-untyped-def]
-    try:
+    with contextlib.suppress(RuntimeError):
         _original_set_start_method(method, force=force)
-    except RuntimeError:
-        pass
 
 
 multiprocessing.set_start_method = _safe_set_start_method  # type: ignore[assignment]

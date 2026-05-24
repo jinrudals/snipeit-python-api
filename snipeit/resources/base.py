@@ -136,26 +136,14 @@ class ApiObject(BaseModel):
                     current = getattr(self, name, _MISSING)
                 except Exception:
                     current = _MISSING
-                if (
-                    current is not _MISSING
-                    and current == value
-                    and name not in self.model_fields_set
-                ):
+                if current is not _MISSING and current == value and name not in self.model_fields_set:
                     # Nothing to do — attribute already has this value and is
                     # not pending in the dirty set.
                     return
             else:
                 # Extra (undeclared) field.
-                current = (
-                    self.__pydantic_extra__.get(name, _MISSING)
-                    if self.__pydantic_extra__
-                    else _MISSING
-                )
-                if (
-                    current is not _MISSING
-                    and current == value
-                    and name not in self._extra_dirty
-                ):
+                current = self.__pydantic_extra__.get(name, _MISSING) if self.__pydantic_extra__ else _MISSING
+                if current is not _MISSING and current == value and name not in self._extra_dirty:
                     return  # no-op and not already pending
                 self._extra_dirty.add(name)
         super().__setattr__(name, value)
@@ -287,9 +275,7 @@ def _extract_payload(resp: dict[str, Any]) -> dict[str, Any]:
     status = resp.get("status")
     if status == "error":
         messages = str(resp.get("messages", "Unknown API error"))
-        raise SnipeITApiError(
-            f"API returned status=error in a 200 response body: {messages}"
-        )
+        raise SnipeITApiError(f"API returned status=error in a 200 response body: {messages}")
     if status == "success" and "payload" in resp:
         payload = resp["payload"]
         return payload if isinstance(payload, dict) else {}
@@ -387,9 +373,7 @@ class BaseResourceManager(Manager, Generic[T]):
     def get(self, obj_id: int, **params: Any) -> T:
         data = self._get(f"{self.path}/{obj_id}", **params)
         if not isinstance(data, dict):
-            raise SnipeITException(
-                f"Unexpected response shape for get: expected dict, got {type(data).__name__}"
-            )
+            raise SnipeITException(f"Unexpected response shape for get: expected dict, got {type(data).__name__}")
         return self._make(data)
 
     def create(self, **data: Any) -> T:

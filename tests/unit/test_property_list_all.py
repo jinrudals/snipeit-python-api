@@ -25,7 +25,7 @@ class _FakeApi:
         self.call_count += 1
         offset = params.get("offset", 0)
         limit = params.get("limit", self._page_size)
-        page_items = self._items[offset: offset + limit]
+        page_items = self._items[offset : offset + limit]
         return {"total": len(self._items), "rows": page_items}
 
 
@@ -86,7 +86,6 @@ def test_list_all_no_duplicate_ids(total, page_size):
     assert len(ids) == len(set(ids))
 
 
-
 # ---------------------------------------------------------------------------
 # Per-page limit cap (perf): when caller's remaining `limit` < `page_size`,
 # we must request only `remaining` rows from the server, not `page_size`.
@@ -104,7 +103,7 @@ class _RecordingApi:
         self.requests.append({"limit": params.get("limit"), "offset": params.get("offset")})
         offset = params.get("offset", 0)
         limit = params.get("limit", len(self._items))
-        return {"total": len(self._items), "rows": self._items[offset: offset + limit]}
+        return {"total": len(self._items), "rows": self._items[offset : offset + limit]}
 
 
 @pytest.mark.unit

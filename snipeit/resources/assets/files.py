@@ -22,9 +22,7 @@ class AssetFilesMixin:
         """List uploaded files for an asset via GET /hardware/:id/files."""
         return self._get(f"{self.path}/{asset_id}/files")  # type: ignore[attr-defined]
 
-    def upload_files(
-        self, asset_id: int, paths: list[str], notes: str | None = None
-    ) -> dict[str, Any]:
+    def upload_files(self, asset_id: int, paths: list[str], notes: str | None = None) -> dict[str, Any]:
         """Upload one or more files for an asset via POST /hardware/:id/files.
 
         Args:
@@ -56,7 +54,7 @@ class AssetFilesMixin:
         opened_files: list[Any] = []
         try:
             for p in paths:
-                f = open(p, "rb")
+                f = open(p, "rb")  # noqa: SIM115
                 opened_files.append(f)
                 files.append(("file[]", (os.path.basename(p), f)))
             data: dict[str, Any] = {}

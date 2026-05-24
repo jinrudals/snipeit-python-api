@@ -17,6 +17,7 @@ class StatusLabel(ApiObject):
             sl = api.status_labels.get(1)
             print(sl)
     """
+
     _resource_path = "statuslabels"
 
     def __repr__(self) -> str:
@@ -43,7 +44,7 @@ class StatusLabelsManager(BaseResourceManager[StatusLabel]):
     resource_cls = StatusLabel
     path = StatusLabel._resource_path
 
-    def create(self, name: str, type: str, **kwargs: Any) -> 'StatusLabel':
+    def create(self, name: str, type: str, **kwargs: Any) -> "StatusLabel":
         """Create a new status label.
 
         Args:

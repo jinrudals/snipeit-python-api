@@ -46,6 +46,7 @@ def test_download_file_progress_callback(snipeit_client, httpx_mock, tmp_path):
 # Task 11: _stream_request error paths via download_file
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_download_file_timeout_raises_snipeit_timeout_error(snipeit_client, httpx_mock, tmp_path):
     """A timeout during streaming must surface as SnipeITTimeoutError, not a raw httpx error."""
@@ -83,6 +84,7 @@ def test_download_file_connect_error_raises_snipeit_exception(snipeit_client, ht
 # ---------------------------------------------------------------------------
 # Task 15: Streaming download without Content-Length
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_download_file_progress_without_content_length(snipeit_client, httpx_mock, tmp_path):

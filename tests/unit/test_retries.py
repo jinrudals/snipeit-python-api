@@ -155,6 +155,7 @@ def test_retry_after_future_http_date_sleeps_for_correct_duration(httpx_mock):
 # Task 17: respect_retry_after=False and PATCH/DELETE non-retry
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_retry_after_false_uses_backoff_not_header(httpx_mock):
     """When respect_retry_after=False, the Retry-After header must be ignored and backoff used."""
@@ -221,7 +222,6 @@ def test_delete_503_does_not_retry_by_default(httpx_mock):
     with pytest.raises(SnipeITServerError):
         client.delete("hardware/1")
     assert len(httpx_mock.get_requests()) == 1
-
 
 
 # ---------------------------------------------------------------------------

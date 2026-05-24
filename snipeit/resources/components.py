@@ -17,6 +17,7 @@ class Component(ApiObject):
             comp = api.components.get(1)
             print(comp)
     """
+
     _resource_path = "components"
 
     def __repr__(self) -> str:
@@ -43,7 +44,7 @@ class ComponentsManager(BaseResourceManager[Component]):
     resource_cls = Component
     path = Component._resource_path
 
-    def create(self, name: str, qty: int, category_id: int, **kwargs: Any) -> 'Component':
+    def create(self, name: str, qty: int, category_id: int, **kwargs: Any) -> "Component":
         """Create a new component.
 
         Args:

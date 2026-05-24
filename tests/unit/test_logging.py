@@ -57,7 +57,7 @@ def test_token_never_appears_in_logs(client_with_token, httpx_mock, caplog):
 
     for rec in caplog.records:
         assert SUPER_SECRET_TOKEN not in rec.getMessage()
-        for arg in (rec.args or ()):
+        for arg in rec.args or ():
             assert SUPER_SECRET_TOKEN not in str(arg)
 
 
@@ -68,9 +68,8 @@ def test_timeout_emits_warning(client_with_token, httpx_mock, caplog):
         method="GET",
         url="https://snipe.example.test/api/v1/hardware/1",
     )
-    with caplog.at_level(logging.WARNING, logger="snipeit"):
-        with pytest.raises(SnipeITTimeoutError):
-            client_with_token.get("hardware/1")
+    with caplog.at_level(logging.WARNING, logger="snipeit"), pytest.raises(SnipeITTimeoutError):
+        client_with_token.get("hardware/1")
 
     warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
     assert warnings, "expected a WARNING on timeout"
@@ -86,9 +85,8 @@ def test_request_error_emits_warning(client_with_token, httpx_mock, caplog):
             method="GET",
             url="https://snipe.example.test/api/v1/hardware/1",
         )
-    with caplog.at_level(logging.WARNING, logger="snipeit"):
-        with pytest.raises(SnipeITException):
-            client_with_token.get("hardware/1")
+    with caplog.at_level(logging.WARNING, logger="snipeit"), pytest.raises(SnipeITException):
+        client_with_token.get("hardware/1")
 
     warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
     assert warnings, "expected a WARNING on request error"

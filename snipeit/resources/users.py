@@ -17,6 +17,7 @@ class User(ApiObject):
             me = api.users.me()
             print(me)
     """
+
     _resource_path = "users"
 
     def __repr__(self) -> str:
@@ -43,7 +44,7 @@ class UsersManager(BaseResourceManager[User]):
     resource_cls = User
     path = User._resource_path
 
-    def create(self, username: str, **kwargs: Any) -> 'User':
+    def create(self, username: str, **kwargs: Any) -> "User":
         """Create a new user.
 
         Args:
@@ -57,7 +58,7 @@ class UsersManager(BaseResourceManager[User]):
         data.update(kwargs)
         return super().create(**data)
 
-    def me(self) -> 'User':
+    def me(self) -> "User":
         """Get the currently authenticated user.
 
         Returns:

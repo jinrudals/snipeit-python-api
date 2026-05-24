@@ -17,6 +17,7 @@ class Field(ApiObject):
             fld = api.fields.get(1)
             print(fld)
     """
+
     _resource_path = "fields"
 
     def __repr__(self) -> str:
@@ -43,7 +44,7 @@ class FieldsManager(BaseResourceManager[Field]):
     resource_cls = Field
     path = Field._resource_path
 
-    def create(self, name: str, element: str, **kwargs: Any) -> 'Field':
+    def create(self, name: str, element: str, **kwargs: Any) -> "Field":
         """Create a new custom field.
 
         Args:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -31,7 +33,5 @@ def test_consumables_crud(real_snipeit_client: SnipeIT, base, run_id: str, _n, i
         listed = c.consumables.list()
         assert any(id_int(x) == id_int(cons) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.consumables.delete(id_int(cons))
-        except Exception:
-            pass

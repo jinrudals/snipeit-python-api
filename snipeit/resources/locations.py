@@ -17,6 +17,7 @@ class Location(ApiObject):
             loc = api.locations.get(1)
             print(loc)
     """
+
     _resource_path = "locations"
 
     def __repr__(self) -> str:
@@ -40,7 +41,7 @@ class LocationsManager(BaseResourceManager[Location]):
     resource_cls = Location
     path = Location._resource_path
 
-    def create(self, name: str, **kwargs: Any) -> 'Location':
+    def create(self, name: str, **kwargs: Any) -> "Location":
         """Create a new location.
 
         Args:

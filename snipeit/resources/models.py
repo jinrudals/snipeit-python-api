@@ -17,6 +17,7 @@ class Model(ApiObject):
             mdl = api.models.get(1)
             print(mdl)
     """
+
     _resource_path = "models"
 
     def __repr__(self) -> str:
@@ -43,7 +44,7 @@ class ModelsManager(BaseResourceManager[Model]):
     resource_cls = Model
     path = Model._resource_path
 
-    def create(self, name: str, category_id: int, manufacturer_id: int, **kwargs: Any) -> 'Model':
+    def create(self, name: str, category_id: int, manufacturer_id: int, **kwargs: Any) -> "Model":
         """Create a new asset model.
 
         Args:

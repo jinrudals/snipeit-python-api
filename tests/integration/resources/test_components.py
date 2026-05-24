@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -32,7 +34,5 @@ def test_components_crud(real_snipeit_client: SnipeIT, base, run_id: str, _n, id
         listed = c.components.list()
         assert any(id_int(x) == id_int(comp) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.components.delete(id_int(comp))
-        except Exception:
-            pass

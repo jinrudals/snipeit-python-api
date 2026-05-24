@@ -25,8 +25,7 @@ def _asset_with_custom_fields(draw):
     server_values = draw(st.lists(_cf_value, min_size=len(labels), max_size=len(labels)))
 
     custom_fields = {
-        label: {"field": col, "value": sv}
-        for label, col, sv in zip(labels, columns, server_values, strict=True)
+        label: {"field": col, "value": sv} for label, col, sv in zip(labels, columns, server_values, strict=True)
     }
 
     class _Mgr:
@@ -40,6 +39,7 @@ def _asset_with_custom_fields(draw):
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @given(_asset_with_custom_fields())

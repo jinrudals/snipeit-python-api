@@ -15,6 +15,7 @@ test-unit:
 # Lint and type check
 check:
 	.venv/bin/ruff check .
+	.venv/bin/ruff format --check .
 	.venv/bin/pyright
 
 # Run tests with coverage (branch coverage) and enforce 95%

@@ -24,9 +24,7 @@ class AssetsManager(AssetFilesMixin, AssetLabelsMixin, BaseResourceManager[Asset
     resource_cls = Asset
     path = Asset._resource_path
 
-    def create(
-        self, status_id: int, model_id: int, asset_tag: str | None = None, **kwargs: Any
-    ) -> Asset:
+    def create(self, status_id: int, model_id: int, asset_tag: str | None = None, **kwargs: Any) -> Asset:
         """Create a new asset.
 
         Args:

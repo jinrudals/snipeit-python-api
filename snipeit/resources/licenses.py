@@ -17,6 +17,7 @@ class License(ApiObject):
             lic = api.licenses.get(1)
             print(lic)
     """
+
     _resource_path = "licenses"
 
     def __repr__(self) -> str:
@@ -43,7 +44,7 @@ class LicensesManager(BaseResourceManager[License]):
     resource_cls = License
     path = License._resource_path
 
-    def create(self, name: str, seats: int, category_id: int, **kwargs: Any) -> 'License':
+    def create(self, name: str, seats: int, category_id: int, **kwargs: Any) -> "License":
         """Create a new license.
 
         Args:

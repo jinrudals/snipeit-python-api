@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -52,10 +54,8 @@ def test_users_crud_and_me(real_snipeit_client: SnipeIT, run_id: str, _n, id_int
         listed = c.users.list()
         assert any(id_int(x) == id_int(u) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.users.delete(id_int(u))
-        except Exception:
-            pass
 
     with pytest.raises((SnipeITNotFoundError, SnipeITApiError)):
         c.users.get(id_int(u))
