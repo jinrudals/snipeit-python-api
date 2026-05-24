@@ -184,3 +184,62 @@ def test_upload_files_closes_file_handles_on_success(snipeit_client, httpx_mock,
 
     assert all(fh.closed for fh in opened_handles if hasattr(fh, "closed")), \
         "All file handles must be closed after upload"
+
+
+@pytest.mark.unit
+def test_upload_files_unreadable_file_raises_permission_error(snipeit_client, tmp_path, monkeypatch):
+    """When a file exists but is not readable, PermissionError must be raised."""
+    import os
+    f = tmp_path / "unreadable.txt"
+    f.write_text("data")
+
+    # Mock os.access to return False to simulate unreadable file
+    monkeypatch.setattr(os, "access", lambda path, mode: False)
+    with pytest.raises(PermissionError, match="File\\(s\\) not readable"):
+        snipeit_client.assets.upload_files(1, [str(f)])
+
+
+@pytest.mark.unit
+def test_upload_files_handles_file_close_failure_gracefully(snipeit_client, httpx_mock, tmp_path, monkeypatch):
+    """If closing an opened file raises an exception, we warn and continue."""
+    f = tmp_path / "warn_close.txt"
+    f.write_text("data")
+    httpx_mock.add_response(
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/files",
+        json={"file": {"original_name": "warn_close.txt"}},
+        status_code=200,
+    )
+
+    # Mock open to return a file wrapper that raises on close
+    original_open = open
+
+    class BadFileWrapper:
+        def __init__(self, fh):
+            self._fh = fh
+            self.name = fh.name
+
+        def read(self, *args, **kwargs):
+            return self._fh.read(*args, **kwargs)
+
+        def close(self):
+            try:
+                self._fh.close()
+            finally:
+                raise Exception("simulated close failure")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.close()
+
+    def bad_open(path, mode="r", *args, **kwargs):
+        fh = original_open(path, mode, *args, **kwargs)
+        return BadFileWrapper(fh)
+
+    import builtins
+    monkeypatch.setattr(builtins, "open", bad_open)
+
+    with pytest.warns(UserWarning, match="Failed to close file"):
+        snipeit_client.assets.upload_files(1, [str(f)])
