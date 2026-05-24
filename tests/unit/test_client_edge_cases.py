@@ -297,10 +297,19 @@ def test_users_create(snipeit_client, httpx_mock):
 
 
 @pytest.mark.unit
-def test_retry_after_http_date_parsing():
+def test_retry_after_http_date_parsing(monkeypatch):
     from snipeit._retry import RetryTransport
     result = RetryTransport._parse_retry_after("Thu, 01 Jan 2020 00:00:00 GMT")
     assert result == 0.0
+
+    # Naive datetime (covers replacement of tzinfo with UTC)
+    result_naive = RetryTransport._parse_retry_after("Thu, 01 Jan 2020 00:00:00")
+    assert result_naive == 0.0
+
+    # Mock parsedate_to_datetime returning None to cover the None check
+    import snipeit._retry
+    monkeypatch.setattr(snipeit._retry, "parsedate_to_datetime", lambda val: None)
+    assert RetryTransport._parse_retry_after("Thu, 01 Jan 2020 00:00:00 GMT") is None
 
 
 @pytest.mark.unit
