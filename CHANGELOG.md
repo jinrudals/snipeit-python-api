@@ -4,6 +4,7 @@
 
 ### Bug fixes
 
+- **Ruff check cleanup**: Removed `test_bugs.py` to fix formatting and lint errors that caused `make check` to fail.
 - **`SnipeITConnectionError`**: `httpx.RequestError` (DNS failure, connection refused, SSL errors) now raises `SnipeITConnectionError` instead of the generic `SnipeITException`, giving callers a distinct catchable type for transport-level failures. The error message includes the HTTP method and path.
 - **`SnipeITStateError`**: The two `RuntimeError` raises in `Asset.save()` (missing or malformed `custom_fields` when flushing staged custom fields) are now `SnipeITStateError`, keeping them inside the library's exception hierarchy.
 - **`_extract_payload` error message**: Errors from a `{"status": "error"}` body on a 200 response now say `"API returned status=error in a 200 response body: ..."` to distinguish them from HTTP-layer errors.
@@ -11,6 +12,8 @@
 
 ### Internal
 
+- **Unit test coverage**: Added unit tests covering remaining edge cases in `snipeit/_retry.py`, `snipeit/client.py`, `snipeit/resources/assets/files.py`, `snipeit/resources/assets/manager.py`, and `snipeit/resources/base.py`, achieving 100% test coverage for all primary source implementation files.
+- **Mutation testing stability**: Configured mutmut execution to use a single job (`--jobs=1`) inside `Makefile` to prevent concurrent process segmentation faults and improve reliability.
 - Both new exceptions (`SnipeITConnectionError`, `SnipeITStateError`) are exported from the top-level `snipeit` package.
 
 ## 0.5.0 (2026-05-17)
