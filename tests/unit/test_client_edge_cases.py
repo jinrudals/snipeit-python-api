@@ -477,3 +477,80 @@ def test_4xx_with_null_messages_produces_empty_string(snipeit_client, httpx_mock
     with pytest.raises(SnipeITClientError) as excinfo:
         snipeit_client.post("hardware", data={})
     assert str(excinfo.value) == ""
+
+
+@pytest.mark.unit
+def test_pkg_version_lookup_failure_fallback(monkeypatch):
+    """Fallback to 'snipeit-api' UA if package version lookup raises an Exception."""
+    import importlib.metadata
+
+    def mock_version(name):
+        raise Exception("mocked lookup error")
+
+    monkeypatch.setattr(importlib.metadata, "version", mock_version)
+    client = SnipeIT(url="https://snipe.example.test", token="test")
+    assert client._http.headers["User-Agent"] == "snipeit-api"
+
+
+@pytest.mark.unit
+def test_raw_request_errors(snipeit_client, httpx_mock):
+    """_raw_request maps timeouts and request errors correctly."""
+    # 1. Timeout error
+    httpx_mock.add_exception(
+        httpx.TimeoutException("timeout"),
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/files",
+    )
+    with pytest.raises(SnipeITTimeoutError) as excinfo:
+        snipeit_client._raw_request("POST", "hardware/1/files", timeout=5)
+    assert "Request timed out after 5 seconds" in str(excinfo.value)
+
+    # 2. Request error
+    httpx_mock.add_exception(
+        httpx.RequestError("request error"),
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/files",
+    )
+    with pytest.raises(SnipeITConnectionError) as excinfo:
+        snipeit_client._raw_request("POST", "hardware/1/files")
+    assert "Connection error on POST /api/v1/hardware/1/files" in str(excinfo.value)
+
+
+@pytest.mark.unit
+def test_stream_request_errors(snipeit_client, monkeypatch):
+    """_stream_request maps timeouts and request errors correctly."""
+    # 1. Timeout error
+    def mock_stream_timeout(*args, **kwargs):
+        raise httpx.TimeoutException("stream timeout")
+
+    monkeypatch.setattr(snipeit_client._http, "stream", mock_stream_timeout)
+    with pytest.raises(SnipeITTimeoutError) as excinfo:
+        with snipeit_client._stream_request("GET", "hardware/1/files"):
+            pass
+    assert "Request timed out after" in str(excinfo.value)
+
+    # 2. Request error
+    def mock_stream_request_error(*args, **kwargs):
+        raise httpx.RequestError(
+            "stream request error", request=httpx.Request("GET", "https://snipe.example.test")
+        )
+
+    monkeypatch.setattr(snipeit_client._http, "stream", mock_stream_request_error)
+    with pytest.raises(SnipeITConnectionError) as excinfo:
+        with snipeit_client._stream_request("GET", "hardware/1/files"):
+            pass
+    assert "Connection error on GET /api/v1/hardware/1/files" in str(excinfo.value)
+
+
+@pytest.mark.unit
+def test_extract_messages_from_non_dict_json_error(snipeit_client, httpx_mock):
+    """_extract_messages falls back to response.reason_phrase if body is non-dict JSON."""
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware/1",
+        status_code=400,
+        json=["some", "error", "list"],
+    )
+    with pytest.raises(SnipeITClientError) as excinfo:
+        snipeit_client.get("hardware/1")
+    assert "Bad Request" in str(excinfo.value)
