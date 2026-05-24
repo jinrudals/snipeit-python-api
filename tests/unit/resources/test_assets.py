@@ -143,6 +143,33 @@ def test_get_by_serial_multiple_found(snipeit_client, httpx_mock):
 
 
 @pytest.mark.unit
+def test_get_by_serial_raw_object_response(snipeit_client, httpx_mock):
+    """get_by_serial supports a raw dictionary response (no list envelope)."""
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware/byserial/SN-RAW",
+        json={"id": 123, "name": "Single Asset", "serial": "SN-RAW"},
+    )
+    asset = snipeit_client.assets.get_by_serial("SN-RAW")
+    assert isinstance(asset, Asset)
+    assert asset.id == 123
+    assert asset.serial == "SN-RAW"
+
+
+@pytest.mark.unit
+def test_get_by_serial_unexpected_shape_raises_api_error(snipeit_client, httpx_mock):
+    """get_by_serial raises SnipeITApiError if response is not dict-shaped or lacks id/rows."""
+    from snipeit.exceptions import SnipeITApiError
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware/byserial/SN-BAD",
+        json=["invalid", "list", "shape"],
+    )
+    with pytest.raises(SnipeITApiError, match="Unexpected response shape for byserial"):
+        snipeit_client.assets.get_by_serial("SN-BAD")
+
+
+@pytest.mark.unit
 def test_get_by_tag_found(snipeit_client, httpx_mock):
     httpx_mock.add_response(
         method="GET",
