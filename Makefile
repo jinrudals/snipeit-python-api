@@ -24,11 +24,11 @@ cov:
 
 # Mutation testing (can be slow)
 mut:
-	$(PY) -m mutmut run || true
+	$(PY) -m mutmut run --jobs=1 || true
 
 # Quick mutation run scoped to the highest-value source files (used in CI)
 mut-quick:
-	$(PY) -m mutmut run || true
+	$(PY) -m mutmut run --jobs=1 || true
 
 mut-report:
 	$(PY) -m mutmut results
