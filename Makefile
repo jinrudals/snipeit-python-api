@@ -107,3 +107,4 @@ test-all:
 	$(MAKE) test
 	$(MAKE) test-integration
 	$(MAKE) check
+	$(MAKE) mut

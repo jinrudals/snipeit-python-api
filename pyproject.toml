@@ -56,6 +56,7 @@ dev = [
 paths_to_mutate = ["snipeit"]
 tests_dir = ["tests/unit", "tests/contract"]
 mutate_only_covered_lines = true
+runner = "python -m pytest -q -p no:cov -p no:hypothesis"
 
 [tool.ruff]
 line-length = 120
