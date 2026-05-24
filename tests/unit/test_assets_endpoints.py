@@ -236,7 +236,9 @@ def test_upload_files_handles_file_close_failure_gracefully(snipeit_client, http
 
     def bad_open(path, mode="r", *args, **kwargs):
         fh = original_open(path, mode, *args, **kwargs)
-        return BadFileWrapper(fh)
+        if "warn_close.txt" in str(path):
+            return BadFileWrapper(fh)
+        return fh
 
     import builtins
     monkeypatch.setattr(builtins, "open", bad_open)

@@ -13,7 +13,7 @@
 ### Internal
 
 - **Unit test coverage**: Added unit tests covering remaining edge cases in `snipeit/_retry.py`, `snipeit/client.py`, `snipeit/resources/assets/files.py`, `snipeit/resources/assets/manager.py`, and `snipeit/resources/base.py`, achieving 100% test coverage for all primary source implementation files.
-- **Mutation testing stability**: Configured mutmut execution to use a single job (`--jobs=1`) inside `Makefile` to prevent concurrent process segmentation faults and improve reliability.
+- **Mutation testing stability**: Configured mutmut execution to use a single child process (`--max-children 1`) inside `Makefile` to prevent concurrent process segmentation faults and improve reliability.
 - Both new exceptions (`SnipeITConnectionError`, `SnipeITStateError`) are exported from the top-level `snipeit` package.
 
 ## 0.5.0 (2026-05-17)
