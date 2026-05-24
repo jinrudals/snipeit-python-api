@@ -304,17 +304,19 @@ def test_safe_snapshot_exception_handler():
 def test_api_object_setattr_getattr_exception():
     """Verify __setattr__ handles property/getattr exceptions gracefully."""
     class BrokenApiObject(ApiObject):
+        other_field: str = ""
+
         def __getattribute__(self, name):
-            if name == "id":
-                raise AttributeError("Broken attribute")
+            if name == "other_field":
+                raise RuntimeError("Broken attribute")
             return super().__getattribute__(name)
 
     mgr = MockManager()
-    obj = BrokenApiObject(mgr, {"id": 1})
+    obj = BrokenApiObject(mgr, {"id": 1, "other_field": "initial"})
     obj._path = "test_objects"
-    # Setting the declared 'id' attribute triggers __setattr__, calls getattr, which raises AttributeError.
+    # Setting the declared 'other_field' attribute triggers __setattr__, calls getattr, which raises RuntimeError.
     # The try-except catch block inside __setattr__ handles this gracefully.
-    obj.id = 2
+    obj.other_field = "fixed"
 
 
 @pytest.mark.unit
