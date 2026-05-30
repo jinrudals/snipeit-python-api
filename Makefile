@@ -27,7 +27,7 @@ cov:
 mut:
 	$(PY) -m mutmut run --max-children 1 || true
 
-# Quick mutation run scoped to the highest-value source files (used in CI)
+# Advisory mutation run used in CI. Scope is controlled by [tool.mutmut].
 mut-quick:
 	$(PY) -m mutmut run --max-children 1 || true
 
@@ -108,4 +108,3 @@ test-all:
 	$(MAKE) test
 	$(MAKE) test-integration
 	$(MAKE) check
-	$(MAKE) mut

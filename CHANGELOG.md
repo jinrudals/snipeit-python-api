@@ -12,6 +12,7 @@
 
 ### Internal
 
+- **Test workflow cleanup**: Removed advisory mutation testing from `make test-all` so the target only runs required gates, and clarified that `mut-quick` uses the shared mutmut configuration.
 - **Unit test coverage**: Added unit tests covering remaining edge cases in `snipeit/_retry.py`, `snipeit/client.py`, `snipeit/resources/assets/files.py`, `snipeit/resources/assets/manager.py`, and `snipeit/resources/base.py`, achieving 100% test coverage for all primary source implementation files.
 - **Mutation testing stability**: Configured mutmut execution to use a single child process (`--max-children 1`) inside `Makefile` to prevent concurrent process segmentation faults and improve reliability.
 - **Lint & formatting hardening**: Selected Ruff's `C4` (comprehensions) and `SIM` (simplification) lint rule groups, formatted the codebase using `ruff format`, and added a formatting check to the Makefile `check` target to enforce style consistency.
