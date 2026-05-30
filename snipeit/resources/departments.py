@@ -17,6 +17,7 @@ class Department(ApiObject):
             dept = api.departments.get(1)
             print(dept)
     """
+
     _resource_path = "departments"
 
     def __repr__(self) -> str:
@@ -40,7 +41,7 @@ class DepartmentsManager(BaseResourceManager[Department]):
     resource_cls = Department
     path = Department._resource_path
 
-    def create(self, name: str, **kwargs: Any) -> 'Department':
+    def create(self, name: str, **kwargs: Any) -> "Department":
         """Create a new department.
 
         Args:

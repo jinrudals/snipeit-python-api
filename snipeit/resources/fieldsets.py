@@ -17,6 +17,7 @@ class Fieldset(ApiObject):
             fs = api.fieldsets.get(1)
             print(fs)
     """
+
     _resource_path = "fieldsets"
 
     def __repr__(self) -> str:
@@ -40,7 +41,7 @@ class FieldsetsManager(BaseResourceManager[Fieldset]):
     resource_cls = Fieldset
     path = Fieldset._resource_path
 
-    def create(self, name: str, **kwargs: Any) -> 'Fieldset':
+    def create(self, name: str, **kwargs: Any) -> "Fieldset":
         """Create a new fieldset.
 
         Args:

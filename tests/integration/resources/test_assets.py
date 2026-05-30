@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import uuid
 from pathlib import Path
 
@@ -69,9 +70,7 @@ def test_assets_full_flow(
         # POST + 5xx (max_retries=5, exponential backoff).
         pdf_path = tmp_path / f"labels-{a.asset_tag}.pdf"
         try:
-            saved = real_snipeit_client_no_retry.assets.labels(
-                str(pdf_path), [a.asset_tag]
-            )
+            saved = real_snipeit_client_no_retry.assets.labels(str(pdf_path), [a.asset_tag])
             assert Path(saved).exists() and Path(saved).stat().st_size > 0
         except SnipeITApiError:
             pytest.skip("labels endpoint not available on this Snipe-IT instance")
@@ -80,10 +79,8 @@ def test_assets_full_flow(
         listed = c.assets.list()
         assert any(id_int(x) == id_int(a) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.assets.delete(id_int(a))
-        except Exception:
-            pass
 
     # After delete, API behavior may vary (soft-delete vs 404). Accept either:
     # - NotFound/ApiError, or
@@ -113,7 +110,5 @@ def test_assets_full_flow(
         try:
             b.checkout(checkout_to_type="user", assigned_to_id=0)  # invalid user id
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 c.assets.delete(id_int(b))
-            except Exception:
-                pass

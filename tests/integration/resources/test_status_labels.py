@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -26,10 +28,8 @@ def test_status_labels_crud(real_snipeit_client: SnipeIT, run_id: str, _n, id_in
         listed = c.status_labels.list()
         assert any(id_int(x) == id_int(lab) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.status_labels.delete(id_int(lab))
-        except Exception:
-            pass
 
     with pytest.raises((SnipeITNotFoundError, SnipeITApiError)):
         c.status_labels.get(id_int(lab))

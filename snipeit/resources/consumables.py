@@ -17,6 +17,7 @@ class Consumable(ApiObject):
             item = api.consumables.get(1)
             print(item)
     """
+
     _resource_path = "consumables"
 
     def __repr__(self) -> str:
@@ -43,7 +44,7 @@ class ConsumablesManager(BaseResourceManager[Consumable]):
     resource_cls = Consumable
     path = Consumable._resource_path
 
-    def create(self, name: str, qty: int, category_id: int, **kwargs: Any) -> 'Consumable':
+    def create(self, name: str, qty: int, category_id: int, **kwargs: Any) -> "Consumable":
         """Create a new consumable.
 
         Args:

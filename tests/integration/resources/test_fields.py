@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -32,10 +34,8 @@ def test_fields_crud(real_snipeit_client: SnipeIT, run_id: str, _n, id_int):
         listed = c.fields.list()
         assert any(id_int(x) == id_int(fld) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.fields.delete(id_int(fld))
-        except Exception:
-            pass
 
     with pytest.raises((SnipeITNotFoundError, SnipeITApiError)):
         c.fields.get(99999999)

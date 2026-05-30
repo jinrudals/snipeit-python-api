@@ -56,12 +56,13 @@ dev = [
 paths_to_mutate = ["snipeit"]
 tests_dir = ["tests/unit", "tests/contract"]
 mutate_only_covered_lines = true
+runner = "python -m pytest -q -p no:cov -p no:hypothesis"
 
 [tool.ruff]
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "B", "I", "UP", "RUF"]
+select = ["E", "F", "B", "I", "UP", "RUF", "C4", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["E501"]

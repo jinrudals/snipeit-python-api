@@ -26,9 +26,7 @@ class Supplier(ApiObject):
         Returns:
             str: The supplier id and name.
         """
-        return (
-            f"<Supplier {(self.id if self.id is not None else 'N/A')}: {getattr(self, 'name', 'N/A')}>"
-        )
+        return f"<Supplier {(self.id if self.id is not None else 'N/A')}: {getattr(self, 'name', 'N/A')}>"
 
 
 class SuppliersManager(BaseResourceManager[Supplier]):

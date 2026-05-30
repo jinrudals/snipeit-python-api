@@ -39,11 +39,7 @@ class AssetLabelsMixin:
             assets = cast(list[Asset], assets_or_tags)
             tags = [a.asset_tag for a in assets if getattr(a, "asset_tag", None)]
         else:
-            tags = [
-                tag
-                for tag in cast(list[str], assets_or_tags)
-                if isinstance(tag, str) and tag.strip()
-            ]
+            tags = [tag for tag in cast(list[str], assets_or_tags) if isinstance(tag, str) and tag.strip()]
 
         if not tags:
             raise ValueError("No valid asset tags found")
@@ -62,9 +58,7 @@ class AssetLabelsMixin:
 
         content_type = (resp.headers.get("Content-Type") or "").lower()
         if "application/pdf" not in content_type:
-            raise SnipeITApiError(
-                f"Expected PDF from hardware/labels; got Content-Type: {content_type or 'unknown'}"
-            )
+            raise SnipeITApiError(f"Expected PDF from hardware/labels; got Content-Type: {content_type or 'unknown'}")
 
         directory = os.path.dirname(save_path)
         if directory:

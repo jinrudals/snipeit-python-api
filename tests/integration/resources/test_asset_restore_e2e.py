@@ -10,8 +10,10 @@ The library wraps ``Asset.restore`` and the unit suite mocks it, but only an
 integration test against real Snipe-IT proves the soft-delete state machine
 works as expected end-to-end.
 """
+
 from __future__ import annotations
 
+import contextlib
 import uuid
 
 import pytest
@@ -22,9 +24,7 @@ from snipeit.exceptions import SnipeITApiError, SnipeITNotFoundError
 pytestmark = pytest.mark.integration
 
 
-def test_asset_soft_delete_and_restore_lifecycle(
-    real_snipeit_client: SnipeIT, base, run_id: str, _n, id_int
-):
+def test_asset_soft_delete_and_restore_lifecycle(real_snipeit_client: SnipeIT, base, run_id: str, _n, id_int):
     c = real_snipeit_client
 
     asset = c.assets.create(
@@ -80,7 +80,5 @@ def test_asset_soft_delete_and_restore_lifecycle(
         assert id_int(restored) == asset_id
     finally:
         if not cleaned_up:
-            try:
+            with contextlib.suppress(Exception):
                 c.assets.delete(asset_id)
-            except Exception:
-                pass

@@ -70,6 +70,7 @@ def test_500_raises_server_error(snipeit_client, httpx_mock):
 @pytest.mark.unit
 def test_api_error_preserves_response_and_status_code():
     import httpx
+
     r = httpx.Response(418, text="")
     exc = SnipeITApiError("I am a teapot", response=r)
     assert exc.response is r
@@ -79,6 +80,7 @@ def test_api_error_preserves_response_and_status_code():
 # ---------------------------------------------------------------------------
 # Task 12: SnipeITValidationError body-parse failure
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_validation_error_with_unparseable_body_sets_errors_none(caplog):

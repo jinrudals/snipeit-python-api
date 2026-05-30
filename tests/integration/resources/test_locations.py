@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -33,14 +35,10 @@ def test_locations_crud_and_parenting(real_snipeit_client: SnipeIT, run_id: str,
         listed = c.locations.list()
         assert any(id_int(x) == id_int(root) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.locations.delete(id_int(child))
-        except Exception:
-            pass
-        try:
+        with contextlib.suppress(Exception):
             c.locations.delete(id_int(root))
-        except Exception:
-            pass
 
     with pytest.raises((SnipeITNotFoundError, SnipeITApiError)):
         c.locations.get(99999999)

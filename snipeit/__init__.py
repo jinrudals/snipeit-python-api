@@ -21,9 +21,11 @@ from .exceptions import (
     SnipeITApiError,
     SnipeITAuthenticationError,
     SnipeITClientError,
+    SnipeITConnectionError,
     SnipeITException,
     SnipeITNotFoundError,
     SnipeITServerError,
+    SnipeITStateError,
     SnipeITTimeoutError,
     SnipeITValidationError,
 )
@@ -33,9 +35,11 @@ __all__ = [
     "SnipeITApiError",
     "SnipeITAuthenticationError",
     "SnipeITClientError",
+    "SnipeITConnectionError",
     "SnipeITException",
     "SnipeITNotFoundError",
     "SnipeITServerError",
+    "SnipeITStateError",
     "SnipeITTimeoutError",
     "SnipeITValidationError",
 ]

@@ -10,6 +10,7 @@ from snipeit._log import redact_headers
 from snipeit.exceptions import (
     SnipeITApiError,
     SnipeITClientError,
+    SnipeITConnectionError,
     SnipeITException,
     SnipeITNotFoundError,
     SnipeITServerError,
@@ -141,9 +142,9 @@ def test_generic_request_exception_raises_SnipeITException(snipeit_client, httpx
             method="GET",
             url="https://snipe.example.test/api/v1/hardware/1",
         )
-    with pytest.raises(SnipeITException) as excinfo:
+    with pytest.raises(SnipeITConnectionError) as excinfo:
         snipeit_client.get("hardware/1")
-    assert str(excinfo.value) == "An unexpected error occurred: boom"
+    assert str(excinfo.value) == "Connection error on GET /api/v1/hardware/1: boom"
 
 
 @pytest.mark.unit
@@ -163,8 +164,10 @@ def test_status_error_default_message(snipeit_client, httpx_mock):
 def test_context_manager_calls_close_on_exit():
     close_called = {"count": 0}
     with SnipeIT(url="https://snipe.example.test", token="fake") as client:
+
         def close_stub():
             close_called["count"] += 1
+
         client._http.close = close_stub
     assert close_called["count"] == 1
 
@@ -172,12 +175,13 @@ def test_context_manager_calls_close_on_exit():
 @pytest.mark.unit
 def test_context_manager_does_not_suppress_exceptions_and_closes():
     close_called = {"count": 0}
-    with pytest.raises(RuntimeError):
-        with SnipeIT(url="https://snipe.example.test", token="fake") as client:
-            def close_stub():
-                close_called["count"] += 1
-            client._http.close = close_stub
-            raise RuntimeError("boom")
+    with pytest.raises(RuntimeError), SnipeIT(url="https://snipe.example.test", token="fake") as client:
+
+        def close_stub():
+            close_called["count"] += 1
+
+        client._http.close = close_stub
+        raise RuntimeError("boom")
     assert close_called["count"] == 1
 
 
@@ -296,15 +300,27 @@ def test_users_create(snipeit_client, httpx_mock):
 
 
 @pytest.mark.unit
-def test_retry_after_http_date_parsing():
+def test_retry_after_http_date_parsing(monkeypatch):
     from snipeit._retry import RetryTransport
+
     result = RetryTransport._parse_retry_after("Thu, 01 Jan 2020 00:00:00 GMT")
     assert result == 0.0
+
+    # Naive datetime (covers replacement of tzinfo with UTC)
+    result_naive = RetryTransport._parse_retry_after("Thu, 01 Jan 2020 00:00:00")
+    assert result_naive == 0.0
+
+    # Mock parsedate_to_datetime returning None to cover the None check
+    import snipeit._retry
+
+    monkeypatch.setattr(snipeit._retry, "parsedate_to_datetime", lambda val: None)
+    assert RetryTransport._parse_retry_after("Thu, 01 Jan 2020 00:00:00 GMT") is None
 
 
 @pytest.mark.unit
 def test_retry_after_invalid_returns_none():
     from snipeit._retry import RetryTransport
+
     assert RetryTransport._parse_retry_after("not-a-date") is None
     assert RetryTransport._parse_retry_after(None) is None
     assert RetryTransport._parse_retry_after("") is None
@@ -333,6 +349,7 @@ def test_mark_dirty_forces_field_into_patch(snipeit_client, httpx_mock):
 # ---------------------------------------------------------------------------
 # Task 9: URL/token validation gaps and _require_body 204 paths
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_empty_token_raises():
@@ -396,6 +413,7 @@ def test_patch_204_raises_snipeit_exception(snipeit_client, httpx_mock):
 # Task 10: Error-message extraction paths
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_4xx_with_non_json_body_uses_reason_phrase(snipeit_client, httpx_mock):
     """When the error body is not JSON, the HTTP reason phrase is used as the message."""
@@ -416,6 +434,7 @@ def test_4xx_with_non_json_body_uses_reason_phrase(snipeit_client, httpx_mock):
             headers={"Content-Type": "text/plain"},
         )
     from snipeit.exceptions import SnipeITServerError
+
     with pytest.raises(SnipeITServerError) as excinfo:
         snipeit_client.get("hardware/1")
     # Message should be non-empty (reason phrase or text)
@@ -432,6 +451,7 @@ def test_4xx_with_messages_list_joins_with_semicolon(snipeit_client, httpx_mock)
         json={"messages": ["name is required", "model_id is required"]},
     )
     from snipeit.exceptions import SnipeITValidationError
+
     with pytest.raises(SnipeITValidationError) as excinfo:
         snipeit_client.post("hardware", data={})
     assert "name is required" in str(excinfo.value)
@@ -449,6 +469,7 @@ def test_4xx_with_messages_dict_formats_as_key_value(snipeit_client, httpx_mock)
         json={"messages": {"name": "The name field is required."}},
     )
     from snipeit.exceptions import SnipeITValidationError
+
     with pytest.raises(SnipeITValidationError) as excinfo:
         snipeit_client.post("hardware", data={})
     assert "name" in str(excinfo.value)
@@ -467,3 +488,77 @@ def test_4xx_with_null_messages_produces_empty_string(snipeit_client, httpx_mock
     with pytest.raises(SnipeITClientError) as excinfo:
         snipeit_client.post("hardware", data={})
     assert str(excinfo.value) == ""
+
+
+@pytest.mark.unit
+def test_pkg_version_lookup_failure_fallback(monkeypatch):
+    """Fallback to 'snipeit-api' UA if package version lookup raises an Exception."""
+    import importlib.metadata
+
+    def mock_version(name):
+        raise Exception("mocked lookup error")
+
+    monkeypatch.setattr(importlib.metadata, "version", mock_version)
+    client = SnipeIT(url="https://snipe.example.test", token="test")
+    assert client._http.headers["User-Agent"] == "snipeit-api"
+
+
+@pytest.mark.unit
+def test_raw_request_errors(snipeit_client, httpx_mock):
+    """_raw_request maps timeouts and request errors correctly."""
+    # 1. Timeout error
+    httpx_mock.add_exception(
+        httpx.TimeoutException("timeout"),
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/files",
+    )
+    with pytest.raises(SnipeITTimeoutError) as excinfo:
+        snipeit_client._raw_request("POST", "hardware/1/files", timeout=5)
+    assert "Request timed out after 5 seconds" in str(excinfo.value)
+
+    # 2. Request error
+    httpx_mock.add_exception(
+        httpx.RequestError("request error"),
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/files",
+    )
+    with pytest.raises(SnipeITConnectionError) as excinfo:
+        snipeit_client._raw_request("POST", "hardware/1/files")
+    assert "Connection error on POST /api/v1/hardware/1/files" in str(excinfo.value)
+
+
+@pytest.mark.unit
+def test_stream_request_errors(snipeit_client, monkeypatch):
+    """_stream_request maps timeouts and request errors correctly."""
+
+    # 1. Timeout error
+    def mock_stream_timeout(*args, **kwargs):
+        raise httpx.TimeoutException("stream timeout")
+
+    monkeypatch.setattr(snipeit_client._http, "stream", mock_stream_timeout)
+    with pytest.raises(SnipeITTimeoutError) as excinfo, snipeit_client._stream_request("GET", "hardware/1/files"):
+        pass
+    assert "Request timed out after" in str(excinfo.value)
+
+    # 2. Request error
+    def mock_stream_request_error(*args, **kwargs):
+        raise httpx.RequestError("stream request error", request=httpx.Request("GET", "https://snipe.example.test"))
+
+    monkeypatch.setattr(snipeit_client._http, "stream", mock_stream_request_error)
+    with pytest.raises(SnipeITConnectionError) as excinfo, snipeit_client._stream_request("GET", "hardware/1/files"):
+        pass
+    assert "Connection error on GET /api/v1/hardware/1/files" in str(excinfo.value)
+
+
+@pytest.mark.unit
+def test_extract_messages_from_non_dict_json_error(snipeit_client, httpx_mock):
+    """_extract_messages falls back to response.reason_phrase if body is non-dict JSON."""
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware/1",
+        status_code=400,
+        json=["some", "error", "list"],
+    )
+    with pytest.raises(SnipeITClientError) as excinfo:
+        snipeit_client.get("hardware/1")
+    assert "Bad Request" in str(excinfo.value)

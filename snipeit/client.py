@@ -16,6 +16,7 @@ from .exceptions import (
     SnipeITApiError,
     SnipeITAuthenticationError,
     SnipeITClientError,
+    SnipeITConnectionError,
     SnipeITException,
     SnipeITNotFoundError,
     SnipeITServerError,
@@ -87,10 +88,7 @@ class SnipeIT:
             and (_scheme == "https" or (_scheme == "http" and _localhost))
         )
         if not _valid:
-            raise ValueError(
-                "URL must be https://<host> or http://localhost (no credentials, "
-                "no path). Got: " + url
-            )
+            raise ValueError("URL must be https://<host> or http://localhost (no credentials, no path). Got: " + url)
 
         if not token or not token.strip():
             raise ValueError("token must be non-empty")
@@ -99,16 +97,13 @@ class SnipeIT:
 
         try:
             from importlib.metadata import version as _pkg_version
+
             _ver = _pkg_version("snipeit-api")
         except Exception:
             _ver = ""
         ua = f"snipeit-api/{_ver}" if _ver else "snipeit-api"
 
-        allowed = (
-            frozenset(retry_allowed_methods)
-            if retry_allowed_methods is not None
-            else DEFAULT_ALLOWED_METHODS
-        )
+        allowed = frozenset(retry_allowed_methods) if retry_allowed_methods is not None else DEFAULT_ALLOWED_METHODS
         self._retry_transport = RetryTransport(
             max_retries=max_retries,
             backoff_factor=backoff_factor,
@@ -199,21 +194,22 @@ class SnipeIT:
             effective_timeout = kwargs.get("timeout", self.timeout)
             logger.warning(
                 "Snipe-IT request timed out after %ss: %s /api/v1/%s",
-                effective_timeout, method, path,
+                effective_timeout,
+                method,
+                path,
             )
-            raise SnipeITTimeoutError(
-                f"Request timed out after {effective_timeout} seconds."
-            ) from e
+            raise SnipeITTimeoutError(f"Request timed out after {effective_timeout} seconds.") from e
         except httpx.RequestError as e:
-            logger.warning(
-                "Snipe-IT request error on %s /api/v1/%s: %s", method, path, e
-            )
-            raise SnipeITException(f"An unexpected error occurred: {e}") from e
+            logger.warning("Snipe-IT request error on %s /api/v1/%s: %s", method, path, e)
+            raise SnipeITConnectionError(f"Connection error on {method} /api/v1/{path}: {e}") from e
 
         elapsed_ms = (time.monotonic() - start) * 1000.0
         http_logger.debug(
             "%s /api/v1/%s -> %d (%.1f ms)",
-            method, path, response.status_code, elapsed_ms,
+            method,
+            path,
+            response.status_code,
+            elapsed_ms,
         )
 
         self._raise_for_status(response)
@@ -224,9 +220,7 @@ class SnipeIT:
         try:
             json_response = response.json()
         except ValueError as e:
-            raise SnipeITException(
-                "Expected JSON response but received invalid or non-JSON content."
-            ) from e
+            raise SnipeITException("Expected JSON response but received invalid or non-JSON content.") from e
 
         if isinstance(json_response, dict) and json_response.get("status") == "error":
             raise SnipeITApiError(
@@ -279,16 +273,12 @@ class SnipeIT:
             return self._http.request(method, path, **kwargs)
         except httpx.TimeoutException as e:
             effective_timeout = kwargs.get("timeout", self.timeout)
-            raise SnipeITTimeoutError(
-                f"Request timed out after {effective_timeout} seconds."
-            ) from e
+            raise SnipeITTimeoutError(f"Request timed out after {effective_timeout} seconds.") from e
         except httpx.RequestError as e:
-            raise SnipeITException(f"An unexpected error occurred: {e}") from e
+            raise SnipeITConnectionError(f"Connection error on {method} /api/v1/{path}: {e}") from e
 
     @contextlib.contextmanager
-    def _stream_request(
-        self, method: str, path: str, **kwargs: Any
-    ) -> Generator[httpx.Response, None, None]:
+    def _stream_request(self, method: str, path: str, **kwargs: Any) -> Generator[httpx.Response, None, None]:
         """Context manager for streaming requests.
 
         Wraps ``httpx.Client.stream`` with the same timeout/error mapping as
@@ -307,20 +297,15 @@ class SnipeIT:
                 yield response
         except httpx.TimeoutException as e:
             effective_timeout = kwargs.get("timeout", self.timeout)
-            raise SnipeITTimeoutError(
-                f"Request timed out after {effective_timeout} seconds."
-            ) from e
+            raise SnipeITTimeoutError(f"Request timed out after {effective_timeout} seconds.") from e
         except httpx.RequestError as e:
-            raise SnipeITException(f"An unexpected error occurred: {e}") from e
+            raise SnipeITConnectionError(f"Connection error on {method} /api/v1/{path}: {e}") from e
 
     @staticmethod
     def _require_body(method: str, body: dict[str, Any] | None) -> dict[str, Any]:
         """Raise if a body-returning verb got a 204 No Content response."""
         if body is None:
-            raise SnipeITException(
-                f"Expected a JSON body from {method}, but server returned "
-                "204 No Content."
-            )
+            raise SnipeITException(f"Expected a JSON body from {method}, but server returned 204 No Content.")
         return body
 
 

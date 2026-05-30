@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -42,7 +44,5 @@ def test_accessories_crud(real_snipeit_client: SnipeIT, base, run_id: str, _n, i
         with pytest.raises((SnipeITNotFoundError, SnipeITValidationError, SnipeITClientError, SnipeITApiError)):
             c.accessories.checkin_from_user(99999999)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.accessories.delete(id_int(acc))
-        except Exception:
-            pass

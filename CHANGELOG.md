@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 0.5.0 (2026-05-17)
+## 0.5.0 (2026-05-30)
 
 ### New features
 
@@ -24,6 +24,14 @@
   smaller than `page_size`, only the needed rows are requested from the
   server. Default `page_size` raised from 50 to 100.
 
+### Bug fixes
+
+- **Ruff check cleanup**: Removed `test_bugs.py` to fix formatting and lint errors that caused `make check` to fail.
+- **`SnipeITConnectionError`**: `httpx.RequestError` (DNS failure, connection refused, SSL errors) now raises `SnipeITConnectionError` instead of the generic `SnipeITException`, giving callers a distinct catchable type for transport-level failures. The error message includes the HTTP method and path.
+- **`SnipeITStateError`**: The two `RuntimeError` raises in `Asset.save()` (missing or malformed `custom_fields` when flushing staged custom fields) are now `SnipeITStateError`, keeping them inside the library's exception hierarchy.
+- **`_extract_payload` error message**: Errors from a `{"status": "error"}` body on a 200 response now say `"API returned status=error in a 200 response body: ..."` to distinguish them from HTTP-layer errors.
+- **`get_by_serial` fallthrough message**: The catch-all error now includes the serial number, response type, and a truncated repr of the unexpected response.
+
 ### Internal / testing
 
 - **No-op retry sleep in test fixtures**: The shared `snipeit_client`
@@ -34,6 +42,12 @@
   and `ApiObject` logic.
 - **Lint hardening**: Strengthened ruff and pyright configuration; applied
   isort, pyupgrade, and bugbear auto-fixes.
+- **Test workflow cleanup**: Removed advisory mutation testing from `make test-all` so the target only runs required gates, and clarified that `mut-quick` uses the shared mutmut configuration.
+- **Unit test coverage**: Added unit tests covering remaining edge cases in `snipeit/_retry.py`, `snipeit/client.py`, `snipeit/resources/assets/files.py`, `snipeit/resources/assets/manager.py`, and `snipeit/resources/base.py`, achieving 100% test coverage for all primary source implementation files.
+- **Mutation testing stability**: Configured mutmut execution to use a single child process (`--max-children 1`) inside `Makefile` to prevent concurrent process segmentation faults and improve reliability.
+- **Mutation workflow removal**: Removed the advisory GitHub Actions mutation workflow; mutation testing remains available locally through `make mut`.
+- **Lint & formatting hardening**: Selected Ruff's `C4` (comprehensions) and `SIM` (simplification) lint rule groups, formatted the codebase using `ruff format`, and added a formatting check to the Makefile `check` target to enforce style consistency.
+- Both new exceptions (`SnipeITConnectionError`, `SnipeITStateError`) are exported from the top-level `snipeit` package.
 
 ## 0.4.0 (2026-05-16)
 

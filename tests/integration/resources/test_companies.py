@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -33,10 +35,8 @@ def test_companies_crud(real_snipeit_client: SnipeIT, run_id: str, _n, id_int):
         got3 = c.companies.get(id_int(got2))
         assert got3.name == got2.name
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.companies.delete(id_int(company))
-        except Exception:
-            pass
 
     with pytest.raises((SnipeITNotFoundError, SnipeITApiError)):
         c.companies.get(id_int(company))

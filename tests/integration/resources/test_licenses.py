@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -31,7 +33,5 @@ def test_licenses_crud(real_snipeit_client: SnipeIT, base, run_id: str, _n, id_i
         listed = c.licenses.list()
         assert any(id_int(x) == id_int(lic) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.licenses.delete(id_int(lic))
-        except Exception:
-            pass

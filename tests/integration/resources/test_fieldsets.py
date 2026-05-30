@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -32,7 +34,5 @@ def test_fieldsets_crud(real_snipeit_client: SnipeIT, run_id: str, _n, id_int):
             assert "in use" in str(e).lower()
     finally:
         # Best-effort cleanup regardless of earlier assertions
-        try:
+        with contextlib.suppress(Exception):
             c.fieldsets.delete(id_int(fs))
-        except Exception:
-            pass

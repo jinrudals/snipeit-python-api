@@ -13,11 +13,13 @@ Examples:
             print("Asset not found:", err)
 """
 
+
 class SnipeITException(Exception):
     """Base exception for all library-specific errors.
 
     This is the parent for all custom exceptions raised by this library.
     """
+
     pass
 
 
@@ -35,6 +37,7 @@ class SnipeITTimeoutError(SnipeITException):
             except SnipeITTimeoutError:
                 print("The API request timed out.")
     """
+
     pass
 
 
@@ -61,6 +64,7 @@ class SnipeITApiError(SnipeITException):
                 if e.response is not None:
                     print(e.response.text)
     """
+
     def __init__(self, message: str, response=None):
         super().__init__(message)
         self.response = response
@@ -73,6 +77,7 @@ class SnipeITAuthenticationError(SnipeITApiError):
     Raises:
         SnipeITAuthenticationError: Always represents a 401 Unauthorized.
     """
+
     pass
 
 
@@ -82,6 +87,7 @@ class SnipeITNotFoundError(SnipeITApiError):
     Raises:
         SnipeITNotFoundError: Always represents a 404 Not Found.
     """
+
     pass
 
 
@@ -104,6 +110,7 @@ class SnipeITValidationError(SnipeITApiError):
             except SnipeITValidationError as e:
                 print(e.errors)
     """
+
     def __init__(self, message: str, response=None):
         super().__init__(message, response=response)
         self.errors = None
@@ -113,9 +120,8 @@ class SnipeITValidationError(SnipeITApiError):
                 self.errors = body.get("errors")
         except Exception as exc:
             import logging
-            logging.getLogger("snipeit").warning(
-                "SnipeITValidationError: failed to parse error body: %s", exc
-            )
+
+            logging.getLogger("snipeit").warning("SnipeITValidationError: failed to parse error body: %s", exc)
 
 
 class SnipeITClientError(SnipeITApiError):
@@ -124,6 +130,7 @@ class SnipeITClientError(SnipeITApiError):
     Raises:
         SnipeITClientError: Represents generic 4xx client-side failures.
     """
+
     pass
 
 
@@ -133,5 +140,48 @@ class SnipeITServerError(SnipeITApiError):
     Raises:
         SnipeITServerError: Represents generic 5xx server-side failures.
     """
+
     pass
 
+
+class SnipeITConnectionError(SnipeITException):
+    """Raised when a network-level error prevents the request from completing.
+
+    Covers DNS failures, connection refused, SSL errors, and other transport
+    errors that occur before a response is received.
+
+    Raises:
+        SnipeITConnectionError: Always represents a transport/connection failure.
+
+    Examples:
+        Handle connection failures::
+
+            try:
+                api.assets.list()
+            except SnipeITConnectionError as e:
+                print("Could not reach Snipe-IT:", e)
+    """
+
+    pass
+
+
+class SnipeITStateError(SnipeITException):
+    """Raised when an operation cannot proceed due to invalid object state.
+
+    For example, attempting to save staged custom fields when the asset's
+    ``custom_fields`` mapping is no longer available.
+
+    Raises:
+        SnipeITStateError: Always represents an invalid in-memory state.
+
+    Examples:
+        Handle state errors::
+
+            try:
+                asset.save()
+            except SnipeITStateError:
+                asset.refresh()
+                asset.save()
+    """
+
+    pass

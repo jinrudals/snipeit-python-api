@@ -50,9 +50,7 @@ def test_labels_sends_exactly_one_accept_header(tmp_path):
 
     class CaptureTransport(httpx.BaseTransport):
         def handle_request(self, request):
-            captured["accept"] = [
-                v.decode() for (k, v) in request.headers.raw if k.lower() == b"accept"
-            ]
+            captured["accept"] = [v.decode() for (k, v) in request.headers.raw if k.lower() == b"accept"]
             return httpx.Response(
                 200,
                 content=b"%PDF-1.4",
@@ -76,6 +74,7 @@ def test_labels_sends_exactly_one_accept_header(tmp_path):
 # ---------------------------------------------------------------------------
 # Task 14: labels() validation paths
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_labels_empty_list_raises_value_error(snipeit_client, tmp_path):

@@ -17,6 +17,7 @@ class Manufacturer(ApiObject):
             m = api.manufacturers.get(1)
             print(m)
     """
+
     _resource_path = "manufacturers"
 
     def __repr__(self) -> str:
@@ -40,7 +41,7 @@ class ManufacturersManager(BaseResourceManager[Manufacturer]):
     resource_cls = Manufacturer
     path = Manufacturer._resource_path
 
-    def create(self, name: str, **kwargs: Any) -> 'Manufacturer':
+    def create(self, name: str, **kwargs: Any) -> "Manufacturer":
         """Create a new manufacturer.
 
         Args:

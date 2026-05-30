@@ -4,6 +4,7 @@ These tests verify that each manager correctly wires list/get/create/patch/delet
 to the right HTTP method and URL path, and that the returned objects are the correct type.
 They replace 13 near-identical per-resource test files.
 """
+
 import json
 
 import pytest
@@ -31,21 +32,21 @@ BASE = "https://snipe.example.test/api/v1"
 # (manager_attr, api_path, resource_cls, create_kwargs)
 # api_path is the URL segment used by Snipe-IT (may differ from attr name, e.g. statuslabels).
 RESOURCES = [
-    ("accessories",  "accessories",  Accessory,    {"name": "x", "qty": 1, "category_id": 1}),
-    ("categories",   "categories",   Category,     {"name": "x", "category_type": "asset"}),
-    ("companies",    "companies",    Company,      {"name": "x"}),
-    ("components",   "components",   Component,    {"name": "x", "qty": 1, "category_id": 1}),
-    ("consumables",  "consumables",  Consumable,   {"name": "x", "qty": 1, "category_id": 1}),
-    ("departments",  "departments",  Department,   {"name": "x"}),
-    ("fields",       "fields",       Field,        {"name": "x", "element": "text"}),
-    ("fieldsets",    "fieldsets",    Fieldset,     {"name": "x"}),
-    ("licenses",     "licenses",     License,      {"name": "x", "seats": 1, "category_id": 1}),
-    ("locations",    "locations",    Location,     {"name": "x"}),
-    ("manufacturers","manufacturers",Manufacturer, {"name": "x"}),
-    ("models",       "models",       Model,        {"name": "x", "category_id": 1, "manufacturer_id": 1}),
-    ("status_labels","statuslabels", StatusLabel,  {"name": "x", "type": "deployable"}),
-    ("suppliers",    "suppliers",    Supplier,     {"name": "x"}),
-    ("users",        "users",        User,         {"username": "x"}),
+    ("accessories", "accessories", Accessory, {"name": "x", "qty": 1, "category_id": 1}),
+    ("categories", "categories", Category, {"name": "x", "category_type": "asset"}),
+    ("companies", "companies", Company, {"name": "x"}),
+    ("components", "components", Component, {"name": "x", "qty": 1, "category_id": 1}),
+    ("consumables", "consumables", Consumable, {"name": "x", "qty": 1, "category_id": 1}),
+    ("departments", "departments", Department, {"name": "x"}),
+    ("fields", "fields", Field, {"name": "x", "element": "text"}),
+    ("fieldsets", "fieldsets", Fieldset, {"name": "x"}),
+    ("licenses", "licenses", License, {"name": "x", "seats": 1, "category_id": 1}),
+    ("locations", "locations", Location, {"name": "x"}),
+    ("manufacturers", "manufacturers", Manufacturer, {"name": "x"}),
+    ("models", "models", Model, {"name": "x", "category_id": 1, "manufacturer_id": 1}),
+    ("status_labels", "statuslabels", StatusLabel, {"name": "x", "type": "deployable"}),
+    ("suppliers", "suppliers", Supplier, {"name": "x"}),
+    ("users", "users", User, {"username": "x"}),
 ]
 
 IDS = [r[0] for r in RESOURCES]
@@ -77,9 +78,7 @@ def test_get_returns_typed_object(snipeit_client, httpx_mock, attr, path, cls, _
 
 
 @pytest.mark.parametrize("attr,path,cls,create_kwargs", RESOURCES, ids=IDS)
-def test_create_sends_correct_body_and_returns_typed_object(
-    snipeit_client, httpx_mock, attr, path, cls, create_kwargs
-):
+def test_create_sends_correct_body_and_returns_typed_object(snipeit_client, httpx_mock, attr, path, cls, create_kwargs):
     httpx_mock.add_response(
         method="POST",
         url=f"{BASE}/{path}",
@@ -94,9 +93,7 @@ def test_create_sends_correct_body_and_returns_typed_object(
 
 
 @pytest.mark.parametrize("attr,path,cls,_create_kwargs", RESOURCES, ids=IDS)
-def test_patch_sends_correct_body_and_returns_typed_object(
-    snipeit_client, httpx_mock, attr, path, cls, _create_kwargs
-):
+def test_patch_sends_correct_body_and_returns_typed_object(snipeit_client, httpx_mock, attr, path, cls, _create_kwargs):
     httpx_mock.add_response(
         method="PATCH",
         url=f"{BASE}/{path}/1",

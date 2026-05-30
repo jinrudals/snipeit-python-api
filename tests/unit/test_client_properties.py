@@ -14,10 +14,22 @@ def test_manager_properties_are_cached():
 
     # Each property should return the same object on subsequent access
     for name in (
-        "assets", "accessories", "components", "consumables", "licenses",
-        "users", "locations", "departments", "manufacturers", "models",
-        "categories", "status_labels", "fields", "fieldsets",
-        "companies", "suppliers",
+        "assets",
+        "accessories",
+        "components",
+        "consumables",
+        "licenses",
+        "users",
+        "locations",
+        "departments",
+        "manufacturers",
+        "models",
+        "categories",
+        "status_labels",
+        "fields",
+        "fieldsets",
+        "companies",
+        "suppliers",
     ):
         mgr = getattr(client, name)
         assert mgr is getattr(client, name), f"{name} not cached"
@@ -40,6 +52,3 @@ def test_request_headers_are_correct(httpx_mock):
     assert req.headers["User-Agent"].startswith("snipeit-api")
     # Content-Type is NOT set at the session level; httpx sets it per-request.
     assert "content-type" not in {k.lower() for k in dict(req.headers)}
-
-
-

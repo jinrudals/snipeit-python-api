@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from snipeit import SnipeIT
@@ -40,10 +42,8 @@ def test_models_crud(real_snipeit_client: SnipeIT, base, run_id: str, _n, id_int
         listed = c.models.list()
         assert any(id_int(x) == id_int(m) for x in listed)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             c.models.delete(id_int(m))
-        except Exception:
-            pass
 
     with pytest.raises((SnipeITNotFoundError, SnipeITApiError)):
         c.models.get(id_int(m))

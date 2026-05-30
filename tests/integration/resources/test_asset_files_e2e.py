@@ -19,8 +19,10 @@ etc.). We use ``.txt`` with random hex content so the bytes are non-trivial
 (64 KiB exercises multi-chunk download) while still passing extension/MIME
 validation.
 """
+
 from __future__ import annotations
 
+import contextlib
 import os
 import secrets
 import uuid
@@ -124,15 +126,9 @@ def test_asset_file_upload_download_delete_roundtrip(
     finally:
         # Best-effort: delete the file if we created it but failed mid-test.
         if uploaded_file_id is not None:
-            try:
+            with contextlib.suppress(Exception):
                 c.assets.delete_file(asset_id, uploaded_file_id)
-            except Exception:
-                pass
-        try:
+        with contextlib.suppress(Exception):
             c.assets.delete(asset_id)
-        except Exception:
-            pass
-        try:
+        with contextlib.suppress(OSError):
             os.remove(src)
-        except OSError:
-            pass

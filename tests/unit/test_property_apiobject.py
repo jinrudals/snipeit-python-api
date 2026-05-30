@@ -67,7 +67,6 @@ def test_apiobject_property_only_sends_changed_fields(initial, updates):
     assert not obj._dirty_set()
 
 
-
 @pytest.mark.unit
 @given(data=st.dictionaries(_key, _simple_vals, min_size=0, max_size=8))
 @settings(suppress_health_check=[HealthCheck.too_slow])

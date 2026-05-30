@@ -201,5 +201,5 @@ make test-unit       # Alias
 make test-integration  # Requires Docker
 make test-all        # Both
 make check           # ruff + pyright
-make cov             # Coverage (≥85% enforced)
+make cov             # Coverage (≥95% enforced)
 ```

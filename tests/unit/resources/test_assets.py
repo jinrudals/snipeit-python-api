@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from snipeit.exceptions import SnipeITNotFoundError
+from snipeit.exceptions import SnipeITNotFoundError, SnipeITStateError
 from snipeit.resources.assets import Asset
 
 pytestmark = pytest.mark.unit
@@ -12,7 +12,15 @@ pytestmark = pytest.mark.unit
 def test_list_assets(snipeit_client, httpx_mock):
     mock_response = {
         "total": 1,
-        "rows": [{"id": 1, "name": "Test Asset", "asset_tag": "12345", "serial": "SN123", "model": {"id": 1, "name": "Test Model"}}],
+        "rows": [
+            {
+                "id": 1,
+                "name": "Test Asset",
+                "asset_tag": "12345",
+                "serial": "SN123",
+                "model": {"id": 1, "name": "Test Model"},
+            }
+        ],
     }
     httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware", json=mock_response)
     assets = snipeit_client.assets.list()
@@ -26,7 +34,13 @@ def test_list_assets(snipeit_client, httpx_mock):
 
 @pytest.mark.unit
 def test_get_single_asset(snipeit_client, httpx_mock):
-    mock_response = {"id": 2, "name": "Another Asset", "asset_tag": "67890", "serial": "SN456", "model": {"id": 2, "name": "Another Model"}}
+    mock_response = {
+        "id": 2,
+        "name": "Another Asset",
+        "asset_tag": "67890",
+        "serial": "SN456",
+        "model": {"id": 2, "name": "Another Model"},
+    }
     httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/2", json=mock_response)
     asset = snipeit_client.assets.get(2)
     assert isinstance(asset, Asset)
@@ -53,7 +67,14 @@ def test_save_asset(snipeit_client, httpx_mock):
     httpx_mock.add_response(
         method="GET",
         url="https://snipe.example.test/api/v1/hardware/4",
-        json={"id": 4, "name": "Original Name", "notes": "Original notes", "asset_tag": "original-tag", "serial": "SN-ORIGINAL", "model": {"id": 1, "name": "Test Model"}},
+        json={
+            "id": 4,
+            "name": "Original Name",
+            "notes": "Original notes",
+            "asset_tag": "original-tag",
+            "serial": "SN-ORIGINAL",
+            "model": {"id": 1, "name": "Test Model"},
+        },
     )
     httpx_mock.add_response(
         method="PATCH",
@@ -77,7 +98,13 @@ def test_save_new_attribute(snipeit_client, httpx_mock):
     httpx_mock.add_response(
         method="GET",
         url="https://snipe.example.test/api/v1/hardware/5",
-        json={"id": 5, "name": "Asset without notes", "asset_tag": "no-notes-tag", "serial": "SN-NO-NOTES", "model": {"id": 1, "name": "Test Model"}},
+        json={
+            "id": 5,
+            "name": "Asset without notes",
+            "asset_tag": "no-notes-tag",
+            "serial": "SN-NO-NOTES",
+            "model": {"id": 1, "name": "Test Model"},
+        },
     )
     httpx_mock.add_response(
         method="PATCH",
@@ -132,6 +159,7 @@ def test_get_by_serial_not_found(snipeit_client, httpx_mock):
 @pytest.mark.unit
 def test_get_by_serial_multiple_found(snipeit_client, httpx_mock):
     from snipeit.exceptions import SnipeITApiError
+
     httpx_mock.add_response(
         method="GET",
         url="https://snipe.example.test/api/v1/hardware/byserial/SN789",
@@ -140,6 +168,34 @@ def test_get_by_serial_multiple_found(snipeit_client, httpx_mock):
     with pytest.raises(SnipeITApiError) as excinfo:
         snipeit_client.assets.get_by_serial("SN789")
     assert "SN789" in str(excinfo.value) and "2" in str(excinfo.value)
+
+
+@pytest.mark.unit
+def test_get_by_serial_raw_object_response(snipeit_client, httpx_mock):
+    """get_by_serial supports a raw dictionary response (no list envelope)."""
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware/byserial/SN-RAW",
+        json={"id": 123, "name": "Single Asset", "serial": "SN-RAW"},
+    )
+    asset = snipeit_client.assets.get_by_serial("SN-RAW")
+    assert isinstance(asset, Asset)
+    assert asset.id == 123
+    assert asset.serial == "SN-RAW"
+
+
+@pytest.mark.unit
+def test_get_by_serial_unexpected_shape_raises_api_error(snipeit_client, httpx_mock):
+    """get_by_serial raises SnipeITApiError if response is not dict-shaped or lacks id/rows."""
+    from snipeit.exceptions import SnipeITApiError
+
+    httpx_mock.add_response(
+        method="GET",
+        url="https://snipe.example.test/api/v1/hardware/byserial/SN-BAD",
+        json=["invalid", "list", "shape"],
+    )
+    with pytest.raises(SnipeITApiError, match="Unexpected response shape for byserial"):
+        snipeit_client.assets.get_by_serial("SN-BAD")
 
 
 @pytest.mark.unit
@@ -168,9 +224,17 @@ def test_get_by_tag_not_found(snipeit_client, httpx_mock):
 
 @pytest.mark.unit
 def test_asset_checkout_to_user(snipeit_client, httpx_mock):
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/1/checkout", json={"status": "success", "payload": {}})
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/checkout",
+        json={"status": "success", "payload": {}},
+    )
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
     asset = snipeit_client.assets.get(1)
     asset.checkout(checkout_to_type="user", assigned_to_id=123)
     post_body = json.loads(httpx_mock.get_requests()[1].content)
@@ -180,9 +244,17 @@ def test_asset_checkout_to_user(snipeit_client, httpx_mock):
 
 @pytest.mark.unit
 def test_asset_checkout_to_location(snipeit_client, httpx_mock):
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/1/checkout", json={"status": "success", "payload": {}})
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/checkout",
+        json={"status": "success", "payload": {}},
+    )
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
     asset = snipeit_client.assets.get(1)
     asset.checkout(checkout_to_type="location", assigned_to_id=456)
     post_body = json.loads(httpx_mock.get_requests()[1].content)
@@ -192,9 +264,17 @@ def test_asset_checkout_to_location(snipeit_client, httpx_mock):
 
 @pytest.mark.unit
 def test_asset_checkout_to_asset(snipeit_client, httpx_mock):
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/1/checkout", json={"status": "success", "payload": {}})
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/checkout",
+        json={"status": "success", "payload": {}},
+    )
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
     asset = snipeit_client.assets.get(1)
     asset.checkout(checkout_to_type="asset", assigned_to_id=789)
     post_body = json.loads(httpx_mock.get_requests()[1].content)
@@ -204,9 +284,17 @@ def test_asset_checkout_to_asset(snipeit_client, httpx_mock):
 
 @pytest.mark.unit
 def test_asset_checkin(snipeit_client, httpx_mock):
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/1/checkin", json={"status": "success", "payload": {}})
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/checkin",
+        json={"status": "success", "payload": {}},
+    )
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
     asset = snipeit_client.assets.get(1)
     asset.checkin(note="Returned")
     post_body = json.loads(httpx_mock.get_requests()[1].content)
@@ -215,9 +303,17 @@ def test_asset_checkin(snipeit_client, httpx_mock):
 
 @pytest.mark.unit
 def test_asset_audit(snipeit_client, httpx_mock):
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/1/audit", json={"status": "success", "payload": {}})
-    httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"})
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/audit",
+        json={"status": "success", "payload": {}},
+    )
+    httpx_mock.add_response(
+        method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1, "name": "Test Asset"}
+    )
     asset = snipeit_client.assets.get(1)
     asset.audit(note="Audited")
     post_body = json.loads(httpx_mock.get_requests()[1].content)
@@ -299,7 +395,9 @@ def test_create_maintenance_returns_payload(snipeit_client, httpx_mock):
         url="https://snipe.example.test/api/v1/hardware/1/maintenances",
         json={"status": "success", "payload": {"id": 99, "title": "Tune-up"}},
     )
-    payload = snipeit_client.assets.create_maintenance(asset_id=1, asset_improvement="repair", supplier_id=2, title="Tune-up")
+    payload = snipeit_client.assets.create_maintenance(
+        asset_id=1, asset_improvement="repair", supplier_id=2, title="Tune-up"
+    )
     assert payload == {"id": 99, "title": "Tune-up"}
 
 
@@ -307,8 +405,13 @@ def test_create_maintenance_returns_payload(snipeit_client, httpx_mock):
 def test_asset_checkout_passes_extra_kwargs_to_request(snipeit_client, httpx_mock):
     """Extra kwargs like note and expected_checkin must reach the POST body."""
     import json as _json
+
     httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1})
-    httpx_mock.add_response(method="POST", url="https://snipe.example.test/api/v1/hardware/1/checkout", json={"status": "success", "payload": {}})
+    httpx_mock.add_response(
+        method="POST",
+        url="https://snipe.example.test/api/v1/hardware/1/checkout",
+        json={"status": "success", "payload": {}},
+    )
     httpx_mock.add_response(method="GET", url="https://snipe.example.test/api/v1/hardware/1", json={"id": 1})
     asset = snipeit_client.assets.get(1)
     asset.checkout(
@@ -328,8 +431,9 @@ def test_asset_checkout_passes_extra_kwargs_to_request(snipeit_client, httpx_moc
 # ---------------------------------------------------------------------------
 
 
-def _asset_with_custom_field(snipeit_client, httpx_mock, *, asset_id=20, label="Owner",
-                             column="_snipeit_owner_3", value="bob"):
+def _asset_with_custom_field(
+    snipeit_client, httpx_mock, *, asset_id=20, label="Owner", column="_snipeit_owner_3", value="bob"
+):
     """Helper: GET an asset that has a single custom field defined."""
     httpx_mock.add_response(
         method="GET",
@@ -396,9 +500,7 @@ def test_get_custom_field_returns_server_value_after_stage(snipeit_client, httpx
 
 
 @pytest.mark.unit
-def test_get_custom_field_returns_new_server_value_after_save(
-    snipeit_client, httpx_mock
-):
+def test_get_custom_field_returns_new_server_value_after_save(snipeit_client, httpx_mock):
     """After save(), the staged value has been persisted; get_custom_field
     now reflects it (because Asset._apply_server_data folded the top-level
     `_snipeit_*` echo back into the nested shape)."""
@@ -514,7 +616,7 @@ def test_save_raises_when_pending_label_is_not_in_custom_fields(snipeit_client, 
     )
     asset = snipeit_client.assets.get(105)
     asset._pending_custom_fields["Owner"] = "alice"  # whitebox: simulate stale stage
-    with pytest.raises(RuntimeError, match="custom_fields"):
+    with pytest.raises(SnipeITStateError, match="custom_fields"):
         asset.save()
 
 
@@ -531,7 +633,7 @@ def test_save_raises_when_pending_label_entry_malformed(snipeit_client, httpx_mo
     )
     asset = snipeit_client.assets.get(106)
     asset._pending_custom_fields["Owner"] = "alice"
-    with pytest.raises(RuntimeError, match="Owner"):
+    with pytest.raises(SnipeITStateError, match="Owner"):
         asset.save()
 
 
@@ -539,9 +641,7 @@ def test_save_raises_when_pending_label_entry_malformed(snipeit_client, httpx_mo
 
 
 @pytest.mark.unit
-def test_save_preserves_local_custom_fields_when_payload_returns_null(
-    snipeit_client, httpx_mock
-):
+def test_save_preserves_local_custom_fields_when_payload_returns_null(snipeit_client, httpx_mock):
     """Snipe-IT's PATCH response has custom_fields=null and echoes column-name
     keys at the top level. Asset._apply_server_data must preserve the local
     nested shape and refresh values from those top-level keys."""
@@ -554,8 +654,8 @@ def test_save_preserves_local_custom_fields_when_payload_returns_null(
             "payload": {
                 "id": 200,
                 "name": None,
-                "custom_fields": None,           # the quirk
-                "_snipeit_owner_3": "alice",     # top-level echo
+                "custom_fields": None,  # the quirk
+                "_snipeit_owner_3": "alice",  # top-level echo
             },
         },
     )
@@ -583,9 +683,9 @@ def test_save_strips_stray_snipeit_keys_from_payload(snipeit_client, httpx_mock)
             "payload": {
                 "id": 201,
                 "custom_fields": None,
-                "_snipeit_owner_3": "alice",         # this asset's column
-                "_snipeit_other_99": "STRAY",        # not in this asset's fieldset
-                "_snipeit_yet_another_42": None,     # also stray
+                "_snipeit_owner_3": "alice",  # this asset's column
+                "_snipeit_other_99": "STRAY",  # not in this asset's fieldset
+                "_snipeit_yet_another_42": None,  # also stray
             },
         },
     )
@@ -653,9 +753,7 @@ def test_two_consecutive_saves_without_refresh_succeed(snipeit_client, httpx_moc
 
 
 @pytest.mark.unit
-def test_refresh_with_nested_custom_fields_payload_flows_through(
-    snipeit_client, httpx_mock
-):
+def test_refresh_with_nested_custom_fields_payload_flows_through(snipeit_client, httpx_mock):
     """A GET response (e.g. via refresh()) that contains the proper nested
     custom_fields shape should be applied unchanged — the option-A branch
     is for PATCH responses only."""
@@ -858,9 +956,7 @@ def test_set_custom_field_no_op_when_value_unchanged(snipeit_client, httpx_mock)
     matches the no-op behaviour of plain attribute assignment on declared
     fields (e.g. ``asset.name = asset.name`` does not mark dirty).
     """
-    asset = _asset_with_custom_field(
-        snipeit_client, httpx_mock, asset_id=27, value="bob"
-    )
+    asset = _asset_with_custom_field(snipeit_client, httpx_mock, asset_id=27, value="bob")
     # set to the value that's already there.
     asset.set_custom_field("Owner", "bob")
     # Nothing queued in either channel.
@@ -873,15 +969,11 @@ def test_set_custom_field_no_op_when_value_unchanged(snipeit_client, httpx_mock)
 
 
 @pytest.mark.unit
-def test_set_custom_field_back_to_server_value_cancels_pending(
-    snipeit_client, httpx_mock
-):
+def test_set_custom_field_back_to_server_value_cancels_pending(snipeit_client, httpx_mock):
     """Staging a value, then re-staging the server's current value, cancels
     the pending change for that label. No PATCH should be issued on save().
     """
-    asset = _asset_with_custom_field(
-        snipeit_client, httpx_mock, asset_id=28, value="bob"
-    )
+    asset = _asset_with_custom_field(snipeit_client, httpx_mock, asset_id=28, value="bob")
     asset.set_custom_field("Owner", "alice")  # queues
     assert asset.pending_custom_fields() == {"Owner": "alice"}
     asset.set_custom_field("Owner", "bob")  # cancels (matches server value)
@@ -892,15 +984,11 @@ def test_set_custom_field_back_to_server_value_cancels_pending(
 
 
 @pytest.mark.unit
-def test_set_custom_field_twice_before_save_uses_latest_value(
-    snipeit_client, httpx_mock
-):
+def test_set_custom_field_twice_before_save_uses_latest_value(snipeit_client, httpx_mock):
     """Two consecutive set_custom_field calls on the same label before a
     single save() should send only the latest value.
     """
-    asset = _asset_with_custom_field(
-        snipeit_client, httpx_mock, asset_id=29, value="bob"
-    )
+    asset = _asset_with_custom_field(snipeit_client, httpx_mock, asset_id=29, value="bob")
     httpx_mock.add_response(
         method="PATCH",
         url="https://snipe.example.test/api/v1/hardware/29",
@@ -921,9 +1009,7 @@ def test_set_custom_field_refresh_discards_staged_change(snipeit_client, httpx_m
     """refresh() should drop staged custom-field changes cleanly, leaving the
     object in a clean, non-dirty state with no leftover column-name PATCH.
     """
-    asset = _asset_with_custom_field(
-        snipeit_client, httpx_mock, asset_id=30, value="bob"
-    )
+    asset = _asset_with_custom_field(snipeit_client, httpx_mock, asset_id=30, value="bob")
     asset.set_custom_field("Owner", "alice")
     assert asset.pending_custom_fields() == {"Owner": "alice"}
 
@@ -953,9 +1039,7 @@ def test_set_custom_field_refresh_discards_staged_change(snipeit_client, httpx_m
 
 
 @pytest.mark.unit
-def test_set_custom_field_does_not_leak_into_pydantic_internals(
-    snipeit_client, httpx_mock
-):
+def test_set_custom_field_does_not_leak_into_pydantic_internals(snipeit_client, httpx_mock):
     """Regression guard: the new `_pending_custom_fields` channel must not
     leak the column name into ``__pydantic_extra__`` or ``__dict__``.
 
@@ -963,9 +1047,7 @@ def test_set_custom_field_does_not_leak_into_pydantic_internals(
     pydantic v2's storage internals — if a staged column name reappears in
     either bucket, the dedicated channel has been bypassed.
     """
-    asset = _asset_with_custom_field(
-        snipeit_client, httpx_mock, asset_id=31, value="bob"
-    )
+    asset = _asset_with_custom_field(snipeit_client, httpx_mock, asset_id=31, value="bob")
     asset.set_custom_field("Owner", "alice")
     # Staging lives ONLY in `_pending_custom_fields`.
     assert asset.pending_custom_fields() == {"Owner": "alice"}
@@ -1002,16 +1084,12 @@ def test_set_custom_field_does_not_leak_into_pydantic_internals(
 
 
 @pytest.mark.unit
-def test_set_custom_field_does_not_touch_extra_dirty_or_snapshot(
-    snipeit_client, httpx_mock
-):
+def test_set_custom_field_does_not_touch_extra_dirty_or_snapshot(snipeit_client, httpx_mock):
     """Regression guard: set_custom_field must not poke `_extra_dirty` or
     the loaded-state snapshot. The dedicated `_pending_custom_fields`
     channel is the only place staging state lives.
     """
-    asset = _asset_with_custom_field(
-        snipeit_client, httpx_mock, asset_id=32, value="bob"
-    )
+    asset = _asset_with_custom_field(snipeit_client, httpx_mock, asset_id=32, value="bob")
     snapshot_before = dict(asset._loaded_state) if asset._loaded_state else {}
     extra_dirty_before = set(asset._extra_dirty)
 
@@ -1025,7 +1103,6 @@ def test_set_custom_field_does_not_touch_extra_dirty_or_snapshot(
     assert asset._loaded_state == snapshot_before
     # `custom_fields[Owner].value` still reflects the server's "bob".
     assert asset.custom_fields["Owner"]["value"] == "bob"
-
 
 
 # ---------------------------------------------------------------------------

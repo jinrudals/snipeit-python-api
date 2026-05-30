@@ -15,6 +15,7 @@ test-unit:
 # Lint and type check
 check:
 	.venv/bin/ruff check .
+	.venv/bin/ruff format --check .
 	.venv/bin/pyright
 
 # Run tests with coverage (branch coverage) and enforce 95%
@@ -24,11 +25,11 @@ cov:
 
 # Mutation testing (can be slow)
 mut:
-	$(PY) -m mutmut run || true
+	$(PY) -m mutmut run --max-children 1 || true
 
-# Quick mutation run scoped to the highest-value source files (used in CI)
+# Advisory mutation run used in CI. Scope is controlled by [tool.mutmut].
 mut-quick:
-	$(PY) -m mutmut run || true
+	$(PY) -m mutmut run --max-children 1 || true
 
 mut-report:
 	$(PY) -m mutmut results
