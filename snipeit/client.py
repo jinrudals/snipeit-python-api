@@ -61,17 +61,19 @@ class SnipeIT:
         max_retries: int = 3,
         backoff_factor: float = 0.3,
         retry_allowed_methods: set[str] | None = None,
+        allow_http: bool = False
     ) -> None:
         """Initialize the Snipe-IT API client.
 
         Args:
-            url: Base URL. Must be ``https://<host>`` or ``http://localhost``.
+            url: Base URL. Must be ``https://<host>`` or ``http://localhost`` unless ``allow_http=True``.
             token: API token for authentication.
             timeout: Request timeout in seconds. Defaults to 10.
             max_retries: Maximum retry attempts for transient errors.
             backoff_factor: Exponential backoff factor for retries.
             retry_allowed_methods: HTTP methods safe to retry. Defaults to
                 ``{"HEAD", "GET", "OPTIONS"}``.
+            allow_http: Permit unencrypted HTTP connections to non-local hosts. Defaults to False.
 
         Raises:
             ValueError: If the URL or token values are invalid.
@@ -85,7 +87,7 @@ class SnipeIT:
         _valid = (
             not (_parsed.username or _parsed.password)
             and _parsed.path in {"", "/"}
-            and (_scheme == "https" or (_scheme == "http" and _localhost))
+            and (_scheme == "https" or (_scheme == "http" and (_localhost or allow_http) ))
         )
         if not _valid:
             raise ValueError("URL must be https://<host> or http://localhost (no credentials, no path). Got: " + url)
